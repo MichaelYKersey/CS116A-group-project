@@ -10,6 +10,7 @@ build_application(
     ./src/noiseutils.cpp
     ./src/Renderer.cpp
     ./src/VertexArrayWrapper.cpp
+    ./src/app_util.cpp
     
     # comment out all applications besides the one you want to run
     ./applications/main.cpp

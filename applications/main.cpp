@@ -17,18 +17,16 @@
 #include <Renderer.h>
 #include <CameraWrapper.h>
 #include <Chunk.h>
+#include <app_util.hpp>
 
 using namespace noise;
 
-void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 void renderWorld(VertexArrayWrapper &worldVAO, Shader worldShader, Renderer renderer, glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection, glm::vec4 plane);
 
 // settings
-const unsigned int SCR_WIDTH  = 800;
-const unsigned int SCR_HEIGHT = 600;
 const int WORLD_SIZE          = 16;
 
 // camera
@@ -56,53 +54,38 @@ glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
 
 int main()
 {
-    // glfw: initialize and configure
-    // ------------------------------
-    glfwInit();
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
-    glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
-    glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
-
-#ifdef __APPLE__
-    glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE);
-#endif
-
-    // glfw window creation
-    // --------------------
-    GLFWwindow* window = glfwCreateWindow(SCR_WIDTH, SCR_HEIGHT, "LearnOpenGL", NULL, NULL);
-    if (window == NULL)
-    {
-        std::cout << "Failed to create GLFW window" << std::endl;
-        glfwTerminate();
-        return -1;
-    }
-    glfwMakeContextCurrent(window);
-    glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    GLFWwindow* window = create_window();
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
+    
+    Shader worldShader("./shaders/WorldShader.GLSL");
+    Shader lightShader("./shaders/LightsShader.GLSL");
+    lightShader.use();
 
-    // tell GLFW to capture our mouse
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    // Init Renderer
+    Renderer renderer;
 
-    // glad: load all OpenGL function pointers
-    // ---------------------------------------
-    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-    {
-        std::cout << "Failed to initialize GLAD" << std::endl;
-        return -1;
+    // Create World Vertex Array
+    VertexArrayWrapper worldVAO(Vertex_Normal_RGB_Optimized);
+
+    // Set up world
+    std::vector<std::vector<std::unique_ptr<Chunk>>> chunks(WORLD_SIZE);
+    
+    // Iterate through chunk grid
+    for (int i = 0; i < WORLD_SIZE; i++) {
+        for (int j = 0; j < WORLD_SIZE; j++) {
+            std::string key = "Chunk" + std::to_string(i) + std::to_string(j);
+            std::unique_ptr<Chunk> chunkPtr = std::make_unique<Chunk>();
+            chunks[i].push_back(std::move(chunkPtr));
+            chunks[i][j]->createLandscape(chunks[i][j]->CHUNK_SIZE * (i + 2), chunks[i][j]->CHUNK_SIZE * (j + 2));
+            worldVAO.createVBO(key, chunks[i][j]->render());
+        }
     }
 
-    // configure global opengl state
-    // -----------------------------
-    glEnable(GL_DEPTH_TEST);
-
-    // build and compile our shader zprogram
-    // ------------------------------------
-    // Shader ourShader("./shaders/7.3.camera.vs", "./shaders/7.3.camera.fs");
-
-    // set up vertex data (and buffer(s)) and configure vertex attributes
-    // ------------------------------------------------------------------
-    std::vector<float> cubes = {
+    std::cout << "iterated through chunks" << std::endl;
+    
+    // Setup lights
+    std::vector<float> lights = {
         // positions          
         -0.5f, -0.5f, -0.5f,
          0.5f, -0.5f, -0.5f,
@@ -146,80 +129,8 @@ int main()
         -0.5f,  0.5f,  0.5f,
         -0.5f,  0.5f, -0.5f, 
     };
-
-    std::vector<float> vertices = {
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 0.0f,
-
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 1.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f, -0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f, -0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f, -0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f, -0.5f, -0.5f,  0.0f, 1.0f,
-
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f,
-         0.5f,  0.5f, -0.5f,  1.0f, 1.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-         0.5f,  0.5f,  0.5f,  1.0f, 0.0f,
-        -0.5f,  0.5f,  0.5f,  0.0f, 0.0f,
-        -0.5f,  0.5f, -0.5f,  0.0f, 1.0f
-    };
-
-    Shader worldShader("./shaders/WorldShader.GLSL");
-    Shader lightShader("./shaders/LightsShader.GLSL");
-    lightShader.use();
-
-    // Init Renderer
-    Renderer renderer;
-
-    // Create World Vertex Array
-    VertexArrayWrapper worldVAO(Vertex_Normal_RGB_Optimized);
-
-    // Set up world
-    std::vector<std::vector<std::unique_ptr<Chunk>>> chunks(WORLD_SIZE);
-    
-    // Iterate through chunk grid
-    for (int i = 0; i < WORLD_SIZE; i++) {
-        for (int j = 0; j < WORLD_SIZE; j++) {
-            std::string key = "Chunk" + std::to_string(i) + std::to_string(j);
-            std::unique_ptr<Chunk> chunkPtr = std::make_unique<Chunk>();
-            chunks[i].push_back(std::move(chunkPtr));
-            chunks[i][j]->createLandscape(chunks[i][j]->CHUNK_SIZE * (i + 2), chunks[i][j]->CHUNK_SIZE * (j + 2));
-            worldVAO.createVBO(key, chunks[i][j]->render());
-        }
-    }
-
-    std::cout << "iterated through chunks" << std::endl;
-
-    // Setup lights
     VertexArrayWrapper lightVAO(Vertex_Default);
-    lightVAO.createVBO("Light", cubes);
+    lightVAO.createVBO("Light", lights);
     lightVAO.bindVBO("Light");
 
     // render loop
@@ -309,7 +220,6 @@ void renderWorld(VertexArrayWrapper &worldVAO, Shader worldShader, Renderer rend
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
-// ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
     if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
@@ -326,17 +236,7 @@ void processInput(GLFWwindow *window)
         camera.processKeyboard(CamMovement::RIGHT, deltaTime);
 }
 
-// glfw: whenever the window size changed (by OS or user resize) this callback function executes
-// ---------------------------------------------------------------------------------------------
-void framebuffer_size_callback(GLFWwindow* window, int width, int height)
-{
-    // make sure the viewport matches the new window dimensions; note that width and 
-    // height will be significantly larger than specified on retina displays.
-    glViewport(0, 0, width, height);
-}
-
 // glfw: whenever the mouse moves, this callback is called
-// -------------------------------------------------------
 void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 {
     if (firstMouse)
@@ -358,7 +258,6 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called
-// ----------------------------------------------------------------------
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
 {
     camera.processMouseScroll(yoffset);
