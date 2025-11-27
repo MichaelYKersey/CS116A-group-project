@@ -29,6 +29,7 @@ class StarterConanRecipe(ConanFile):
         self.requires("opengl/system", transitive_headers=True)
         self.requires("imguidocking/2.0")
         self.requires("glad/0.1.36")
+        self.requires("libnoise/1.0.0")
         # self.requires("stb/cci.20240531")
 
     def build(self):

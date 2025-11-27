@@ -1,6 +1,6 @@
 #pragma once
 
-#include "include/VertexArrayWrapper.h"
+#include "VertexArrayWrapper.h"
 #include "learnopengl/shader_m.h"
 
 class Renderer {

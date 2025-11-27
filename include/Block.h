@@ -1,6 +1,6 @@
 #pragma once
 
-#include <include/common_types.h>
+#include <common_types.h>
 
 class Block {
   private:

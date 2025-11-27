@@ -1,14 +1,85 @@
-#include <include/Chunk.h>
+#include <Chunk.h>
+
+/* -------------------------------------------------------------------------- */
+/*                                  Cube Mesh                                 */
+/* -------------------------------------------------------------------------- */
+
+// pos.x, pos.y, pos.z, normal.x, normal.y, normal.z
+std::vector<float> cube = {
+  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+   0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+   0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+   0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+  -0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
+
+  -0.5f, -0.5f,  0.5f, 0.0f, 0.0f,  1.0f,
+   0.5f, -0.5f,  0.5f, 0.0f, 0.0f,  1.0f,
+   0.5f,  0.5f,  0.5f, 0.0f, 0.0f,  1.0f,
+   0.5f,  0.5f,  0.5f, 0.0f, 0.0f,  1.0f,
+  -0.5f,  0.5f,  0.5f, 0.0f, 0.0f,  1.0f,
+  -0.5f, -0.5f,  0.5f, 0.0f, 0.0f,  1.0f,
+
+  -0.5f,  0.5f,  0.5f, -1.0f, 0.0f, 0.0f,
+  -0.5f,  0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
+  -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
+  -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
+  -0.5f, -0.5f,  0.5f, -1.0f, 0.0f, 0.0f,
+  -0.5f,  0.5f,  0.5f, -1.0f, 0.0f, 0.0f,
+
+   0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+   0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
+   0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
+   0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
+   0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+   0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
+
+  -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
+   0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
+   0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f,
+   0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f,
+  -0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f,
+  -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
+
+  -0.5f,  0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
+   0.5f,  0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
+   0.5f,  0.5f,  0.5f, 0.0f,  1.0f, 0.0f,
+   0.5f,  0.5f,  0.5f, 0.0f,  1.0f, 0.0f,
+  -0.5f,  0.5f,  0.5f, 0.0f,  1.0f, 0.0f,
+  -0.5f,  0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
+};
+
+/* -------------------------------------------------------------------------- */
+/*                                Block Mapping                               */
+/* -------------------------------------------------------------------------- */
+
+std::map<BlockTexture, glm::vec3> textureMap = {
+  {BlockTexture::DEFAULT, glm::vec3(0.04f,   0.44f,   0.15f)},
+  {BlockTexture::GRASS,   glm::vec3(0.04f,   0.44f,   0.15f)},
+  {BlockTexture::SAND,    glm::vec3(0.761f,  0.698f,  0.502f)},
+  {BlockTexture::STONE,   glm::vec3(0.5725f, 0.5569f, 0.5216f)},
+  {BlockTexture::ICE,     glm::vec3(0.2549f, 0.9608f, 0.9647f)},
+  {BlockTexture::SNOW,    glm::vec3(1.0f,    1.0f,    1.0f)},
+};
+
+std::map<BlockTexture, int> textureID = {
+  {BlockTexture::SAND,    0},
+  {BlockTexture::GRASS,   1},
+  {BlockTexture::STONE,   2},
+  {BlockTexture::SNOW,    3},
+};
 
 Chunk::Chunk() {
   block3D = new Block **[CHUNK_SIZE];
 
-  for (int i = 0; i < CHUNK_SIZE; ++i) {
+  for (int i = 0; i < CHUNK_SIZE; i++) {
     block3D[i] = new Block *[CHUNK_SIZE];
-    for (int j = 0; j < CHUNK_SIZE; ++j) {
+    for (int j = 0; j < CHUNK_SIZE; j++) {
       block3D[i][j] = new Block[CHUNK_SIZE];
     }
   }
+
+  setupHeightMap();
 }
 
 Chunk::~Chunk() {
@@ -41,9 +112,9 @@ void Chunk::setupHeightMap() {
   renderer.AddGradientPoint( 0.0000, utils::Color(0,   128, 255, 255)); // shore
   renderer.AddGradientPoint( 0.0625, utils::Color(240, 240, 64,  255)); // sand
   renderer.AddGradientPoint( 0.1250, utils::Color(32,  160, 0,   255)); // grass
-  renderer.AddGradientPoint( 0.0625, utils::Color(224, 224, 64,  255)); // dirt
-  renderer.AddGradientPoint( 0.0625, utils::Color(128, 128, 128, 255)); // rock
-  renderer.AddGradientPoint( 0.0625, utils::Color(255, 255, 255, 255)); // snow
+  renderer.AddGradientPoint( 0.3750, utils::Color(224, 224, 0,   255)); // dirt
+  renderer.AddGradientPoint( 0.7500, utils::Color(128, 128, 128, 255)); // rock
+  renderer.AddGradientPoint( 1.0000, utils::Color(255, 255, 255, 255)); // snow
   
   writer.SetSourceImage(image);
   writer.SetDestFilename("terrain.bmp");
@@ -118,11 +189,11 @@ void Chunk::createLandscape(double dx, double dy) {
   renderer.Render();
 
   // 2. Loop over chunk horizontal positions
-  for (int x = 0; x < CHUNK_SIZE; ++x) {
-    for (int z = 0; z < CHUNK_SIZE; ++z) {
+  for (int x = 0; x < CHUNK_SIZE; x++) {
+    for (int z = 0; z < CHUNK_SIZE; z++) {
       // 3. Get height
       float height = std::min((float)CHUNK_SIZE, ((heightMap.GetValue(x, CHUNK_SIZE - 1 - z) + 1.0f) * (CHUNK_SIZE / 2.0f) * 1.0f));
-      for (int y = 0; y < height; ++y) {
+      for (int y = 0; y < height; y++) {
         block3D[x][y][z].setActive(true);
         block3D[x][y][z].setTexture(getTextureFromHeight((int)y));
       }

@@ -10,7 +10,7 @@
 #include <iostream>
 
 #include <stdlib.h>
-#include <include/common_types.h>
+#include <common_types.h>
 
 /**
  * @brief Parse the GLSL file
@@ -21,6 +21,10 @@
 static Shaders parse(const std::string filePath) {
     // 1. Open file
     std::ifstream file(filePath);
+
+    if (!file) {
+        std::cout << "File could not be found or opened: " << filePath << std::endl;
+    }
 
     // 2. Set current shader
     ShaderType currShader = ShaderType::NONE;

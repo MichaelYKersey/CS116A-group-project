@@ -5,7 +5,7 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <include/common_types.h>
+#include <common_types.h>
 
 class VertexArrayWrapper {
   private:

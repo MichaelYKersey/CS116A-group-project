@@ -8,9 +8,9 @@
 #include <noise/noise.h>
 #include "noiseutils.h"
 
-#include <include/Block.h>
-#include <include/Renderer.h>
-#include <include/common_types.h>
+#include <Block.h>
+#include <Renderer.h>
+#include <common_types.h>
 #include "vector"
 #include "map"
 

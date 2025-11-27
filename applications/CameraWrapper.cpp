@@ -1,4 +1,4 @@
-#include <include/CameraWrapper.h>
+#include <CameraWrapper.h>
 
 Camera::Camera(glm::vec3 position, glm::vec3 up, float yaw, float pitch) {
   this->position = position;
@@ -68,7 +68,7 @@ void Camera::processKeyboard(CamMovement dir, float deltaTime) {
   }
 }
 
-void Camera::processMouseMovement(float offsetX, float offsetY, GLboolean constrainPitch = true) {
+void Camera::processMouseMovement(float offsetX, float offsetY, GLboolean constrainPitch) {
   offsetX *= this->mouseSensitivity;
   offsetY *= this->mouseSensitivity;
 

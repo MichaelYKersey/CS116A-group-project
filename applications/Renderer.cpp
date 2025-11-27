@@ -1,4 +1,4 @@
-#include "include/Renderer.h"
+#include "Renderer.h"
 
 void Renderer::draw(const VertexArrayWrapper& vao, Shader& shader) const {
   vao.bind();

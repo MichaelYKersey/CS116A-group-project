@@ -1,4 +1,4 @@
-#include <include/VertexArrayWrapper.h>
+#include <VertexArrayWrapper.h>
 
 VertexArrayWrapper::VertexArrayWrapper() {
   // 1. Generate a Vertex Array Object and store ID into vArray
