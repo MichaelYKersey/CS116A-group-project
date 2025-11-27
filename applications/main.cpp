@@ -1,6 +1,6 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
-#include <stb_image.h>
+#include <learnopengl/stb_image.h>
 
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -11,13 +11,13 @@
 #include <iostream>
 
 #include <noise/noise.h>
-#include "noiseutils.h"
+#include <noise/noiseutils.h>
 
-#include <VertexArrayWrapper.h>
-#include <Renderer.h>
-#include <CameraWrapper.h>
-#include <Chunk.h>
-#include <app_util.hpp>
+#include <general/VertexArrayWrapper.h>
+#include <general/Renderer.h>
+#include <general/CameraWrapper.h>
+#include <terrain/Chunk.h>
+#include <general/app_util.hpp>
 
 using namespace noise;
 

@@ -6,10 +6,10 @@
 #include <random>
 
 #include <noise/noise.h>
-#include "noiseutils.h"
+#include <noise/noiseutils.h>
 
-#include <Block.h>
-#include <Renderer.h>
+#include <terrain/Block.h>
+#include <general/Renderer.h>
 #include <common_types.h>
 #include "vector"
 #include "map"

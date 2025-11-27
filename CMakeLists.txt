@@ -4,13 +4,13 @@ project(Starter CXX)
 build_application(
 
     SOURCES
-    ./src/Block.cpp
-    ./src/CameraWrapper.cpp
-    ./src/Chunk.cpp
-    ./src/noiseutils.cpp
-    ./src/Renderer.cpp
-    ./src/VertexArrayWrapper.cpp
-    ./src/app_util.cpp
+    ./src/general/CameraWrapper.cpp
+    ./src/general/Renderer.cpp
+    ./src/general/VertexArrayWrapper.cpp
+    ./src/general/app_util.cpp
+    ./src/terrain/Block.cpp
+    ./src/terrain/Chunk.cpp
+    ./src/noise/noiseutils.cpp
     
     # comment out all applications besides the one you want to run
     ./applications/main.cpp

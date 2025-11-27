@@ -1,4 +1,4 @@
-#include <Block.h>
+#include <terrain/Block.h>
 
 Block::Block() {
   this->active = false;
