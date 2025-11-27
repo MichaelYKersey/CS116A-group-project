@@ -74,7 +74,7 @@ int main()
     // Iterate through chunk grid
     for (int i = 0; i < WORLD_SIZE; i++) {
         for (int j = 0; j < WORLD_SIZE; j++) {
-            std::string key = "Chunk" + std::to_string(i) + std::to_string(j);
+            std::string key = "Chunk" + std::to_string(i) +","+ std::to_string(j);
             std::unique_ptr<Chunk> chunkPtr = std::make_unique<Chunk>();
             chunks[i].push_back(std::move(chunkPtr));
             chunks[i][j]->createLandscape(chunks[i][j]->CHUNK_SIZE * (i + 2), chunks[i][j]->CHUNK_SIZE * (j + 2));
@@ -204,7 +204,7 @@ void renderWorld(VertexArrayWrapper &worldVAO, Shader worldShader, Renderer rend
 
     for (int i = 0; i < WORLD_SIZE; ++i) {
         for (int j = 0; j < WORLD_SIZE; ++j) {
-            std::string key = "Chunk" + std::to_string(i) + std::to_string(j);
+            std::string key = "Chunk" + std::to_string(i) +","+ std::to_string(j);
             std::unique_ptr<Chunk> chunkPtr = std::make_unique<Chunk>();
             worldVAO.bindVBO(key);
 
@@ -254,7 +254,7 @@ void mouse_callback(GLFWwindow* window, double xposIn, double yposIn)
     yaw += xoffset;
     pitch += yoffset;
 
-    camera.processMouseMovement(xoffset, yoffset, false);
+    camera.processMouseMovement(xoffset, yoffset, true);
 }
 
 // glfw: whenever the mouse scroll wheel scrolls, this callback is called

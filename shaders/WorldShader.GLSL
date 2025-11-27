@@ -1,6 +1,6 @@
 #Shader Vertex
 #version 330 core
-layout (location = 0) in float vertex;
+layout (location = 0) in float vertex_data;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
@@ -11,10 +11,10 @@ out vec3 Color;
 
 void main()
 {
-    //Deconstruct vertex 
-    int aPos = int(vertex) & ((1 << 18) - 1); //First 18 bits
-    int aNormal = (int(vertex) >> 18) & ((1 << 6) - 1); //Next 6 bits
-    int color = (int(vertex) >> 24) & ((1 << 2) - 1); //Next 2 bits
+    //Deconstruct vertex_data 
+    int aPos = int(vertex_data) & ((1 << 18) - 1); //First 18 bits
+    int aNormal = (int(vertex_data) >> 18) & ((1 << 6) - 1); //Next 6 bits
+    int color = (int(vertex_data) >> 24) & ((1 << 2) - 1); //Next 2 bits
 
     //Deconstruct position integer into x, y, z components
     int x = aPos & ((1 << 6) - 1); 

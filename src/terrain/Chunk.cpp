@@ -193,6 +193,7 @@ void Chunk::createLandscape(double dx, double dy) {
     for (int z = 0; z < CHUNK_SIZE; z++) {
       // 3. Get height
       float height = std::min((float)CHUNK_SIZE, ((heightMap.GetValue(x, CHUNK_SIZE - 1 - z) + 1.0f) * (CHUNK_SIZE / 2.0f) * 1.0f));
+      height = std::max(1.0f,height);
       for (int y = 0; y < height; y++) {
         block3D[x][y][z].setActive(true);
         block3D[x][y][z].setTexture(getTextureFromHeight((int)y));
