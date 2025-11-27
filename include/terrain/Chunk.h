@@ -10,7 +10,6 @@
 
 #include <terrain/Block.h>
 #include <general/Renderer.h>
-#include <common_types.h>
 #include "vector"
 #include "map"
 

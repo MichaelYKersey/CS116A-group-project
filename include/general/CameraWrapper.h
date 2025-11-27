@@ -5,7 +5,26 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <vector>
 
-#include <common_types.h>
+
+/**
+ * @brief Types of Camera Movements
+ * 
+ */
+enum CamMovement {
+  FORWARD, 
+  BACKWARD,
+  LEFT,
+  RIGHT,  
+};
+
+/* -------------------------------------------------------------------------- */
+/*                            Default Camera Values                           */
+/* -------------------------------------------------------------------------- */
+const float YAW         = -90.0f;
+const float PITCH       = 0.0f;
+const float SPEED       = 50.0f;
+const float SENSITIVITY = 0.1f;
+const float ZOOM        = 45.0f;
 
 class Camera {
   private:

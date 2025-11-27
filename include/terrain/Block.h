@@ -1,6 +1,22 @@
 #pragma once
 
-#include <common_types.h>
+
+/**
+ * @brief Types of Blocks
+ * 
+ */
+enum BlockTexture {
+  DEFAULT,
+  GRASS,
+  DIRT,
+  WATER,
+  STONE,
+  WOOD,
+  SAND,
+  ICE,
+  SNOW, 
+  TOTAL,
+};
 
 class Block {
   private:

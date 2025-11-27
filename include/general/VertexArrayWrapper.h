@@ -5,7 +5,20 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include <common_types.h>
+
+/**
+ * @brief Types of Vertex Structure
+ * 
+ */
+enum VertexType {
+  Vertex_Texture,               // x, y, z, tx, ty
+  Vertex_RGB,                   // x, y, z, r, g, b
+  Vertex_Default,               // x, y, z
+  Vertex_Normal,                // x, y, z, n1, n2, n3
+  Vertex_Normal_RGB,            // x, y, z, n1, n2, n3, r, g, b
+  Vertex_Water,                 // x, z
+  Vertex_Normal_RGB_Optimized,  // position | normal | color
+};
 
 class VertexArrayWrapper {
   private:

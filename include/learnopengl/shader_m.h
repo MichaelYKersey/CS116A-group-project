@@ -10,7 +10,25 @@
 #include <iostream>
 
 #include <stdlib.h>
-#include <common_types.h>
+
+/**
+ * @brief Store Vertex/Fragment source
+ * 
+ */
+struct Shaders {
+  std::string vertex;
+  std::string fragment;
+};
+
+/**
+ * @brief Types of Shaders
+ * 
+ */
+enum class ShaderType {
+  NONE     = -1,
+  VERTEX   = 0,
+  FRAGMENT = 1,
+};
 
 /**
  * @brief Parse the GLSL file
