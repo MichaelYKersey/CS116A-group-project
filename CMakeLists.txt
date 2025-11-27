@@ -4,13 +4,16 @@ project(Starter CXX)
 build_application(
 
     SOURCES
-    ./applications/learnopengl_camera_demo.cpp
-    ./applications/Block.cpp
-    ./applications/CameraWrapper.cpp
-    ./applications/Chunk.cpp
-    ./applications/noiseutils.cpp
-    ./applications/Renderer.cpp
-    ./applications/VertexArrayWrapper.cpp
+    ./src/Block.cpp
+    ./src/CameraWrapper.cpp
+    ./src/Chunk.cpp
+    ./src/noiseutils.cpp
+    ./src/Renderer.cpp
+    ./src/VertexArrayWrapper.cpp
+    
+    # comment out all applications besides the one you want to run
+    ./applications/main.cpp
+    #./applications/learnopengl_camera_demo.cpp
 
     PACKAGES
     glfw3
