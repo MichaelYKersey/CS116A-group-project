@@ -29,7 +29,7 @@ vec4 get_rand_unit_vec(vec4 in_vec)
         rand(in_vec.yzwx),
         rand(in_vec.wzyx)
     );    
-    return normalize(in_vec);
+    return normalize(rand_vec);
 }
 
 //dot product of rand vector at gradient sample and perlin smaple position 
@@ -137,12 +137,15 @@ void main()
 {
     // FragColor = vec4(1.0f,1.0f,1.0f, 1.0f);
     // FragColor = get_color();
-    FragColor = vec4(frag__world_pos.xy,1.0f,1.0f);
-    float grad = (frag__world_pos.x/0.75*0.5+0.5);
+    // FragColor = vec4(frag__world_pos.xy,1.0f,1.0f);
+    // float grad = (frag__world_pos.x/0.75*0.5+0.5);
     // FragColor = get_color() * perlin_interpolate(0,1,grad);
-    // FragColor = get_color() * dot_sample(vec4(0.1f,0.1f,0.1f,0.1f),frag__world_pos);
-    // FragColor = get_color() * rand(frag__world_pos/0.1);
-    // FragColor = get_rand_unit_vec(frag__world_pos);
+    vec4 scaled_world_pos = frag__world_pos * 40;
+    ivec4 int_world = ivec4(frag__world_pos);
+    vec4 noised = get_rand_unit_vec(ivec4(frag__world_pos*40));
+    // float val = dot_sample
+    FragColor = get_color() * noised;
+    // FragColor = get_color() * val;
     FragColor.w = 1.0f;
 }
 
