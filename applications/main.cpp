@@ -16,6 +16,7 @@
 #include <general/VertexArrayWrapper.h>
 #include <general/Renderer.h>
 #include <general/CameraWrapper.h>
+#include <general/VolumetricFog.h>
 #include <terrain/Chunk.h>
 #include <terrain/Waterfall.h>
 #include <general/app_util.hpp>
@@ -69,6 +70,9 @@ int main()
 
     // Create World Vertex Array
     VertexArrayWrapper worldVAO(Vertex_Normal_RGB_Optimized);
+
+    // Create Volumetric Fog system
+    VolumetricFog fog;
 
     // Set up world
     std::vector<std::vector<std::unique_ptr<Chunk>>> chunks(WORLD_SIZE);
@@ -234,11 +238,8 @@ int main()
         worldShader.use();
         worldShader.setFloat("time", currentFrame);  // Send time for water animation
 
-        // VOLUMETRIC FOG PARAMETERS - Atmospheric waterfall mist!
-        worldShader.setVec3("fogColor", glm::vec3(0.7f, 0.8f, 0.9f));  // Light blue-gray fog
-        worldShader.setFloat("fogDensity", 0.02f);   // Fog thickness
-        worldShader.setFloat("fogStart", 50.0f);     // Fog starts at distance 50
-        worldShader.setFloat("fogEnd", 250.0f);      // Full fog at distance 250
+        // Apply Volumetric Fog - atmospheric waterfall mist!
+        fog.applyToShader(worldShader);
 
         renderWorld(worldVAO, worldShader, renderer, model, view, projection, glm::vec4(0, 0, 0, 0));
 
