@@ -8,6 +8,7 @@ build_application(
     ./src/general/Renderer.cpp
     ./src/general/VertexArrayWrapper.cpp
     ./src/general/VolumetricFog.cpp
+    ./src/general/Rain.cpp
     ./src/general/app_util.cpp
     ./src/terrain/Block.cpp
     ./src/terrain/Chunk.cpp

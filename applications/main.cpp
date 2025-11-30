@@ -17,6 +17,7 @@
 #include <general/Renderer.h>
 #include <general/CameraWrapper.h>
 #include <general/VolumetricFog.h>
+#include <general/Rain.h>
 #include <terrain/Chunk.h>
 #include <terrain/Waterfall.h>
 #include <general/app_util.hpp>
@@ -73,6 +74,9 @@ int main()
 
     // Create Volumetric Fog system
     VolumetricFog fog;
+
+    // Create Rain system
+    Rain rain(WORLD_SIZE);
 
     // Set up world
     std::vector<std::vector<std::unique_ptr<Chunk>>> chunks(WORLD_SIZE);
@@ -204,6 +208,9 @@ int main()
             waterfall->updateParticles(deltaTime);
         }
 
+        // UPDATE RAIN PHYSICS
+        rain.updateParticles(deltaTime);
+
         // render
         // ------
         // Clear with fog color for seamless horizon blend
@@ -254,6 +261,24 @@ int main()
                 model = glm::scale(model, glm::vec3(20, 20, 20));
                 worldShader.setMat4("model", model);
                 renderer.draw(worldVAO, worldShader);
+            }
+        }
+
+        // RENDER RAIN PARTICLES - Optimized: render each chunk's rain only once
+        for (int i = 0; i < WORLD_SIZE; ++i) {
+            for (int j = 0; j < WORLD_SIZE; ++j) {
+                std::vector<float> rainVertices = rain.renderParticlesForChunk(i, j);
+                if (!rainVertices.empty()) {
+                    // Use unique VBO key per chunk to avoid recreating VBOs
+                    std::string rainKey = "Rain_" + std::to_string(i) + "_" + std::to_string(j);
+                    worldVAO.createVBO(rainKey, rainVertices);
+                    worldVAO.bindVBO(rainKey);
+                    model = glm::mat4(1.0f);
+                    model = glm::translate(model, glm::vec3(i * 20, 0.0f, -j * 20));
+                    model = glm::scale(model, glm::vec3(20, 20, 20));
+                    worldShader.setMat4("model", model);
+                    renderer.draw(worldVAO, worldShader);
+                }
             }
         }
 
