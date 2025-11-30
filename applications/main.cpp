@@ -17,6 +17,7 @@
 #include <general/Renderer.h>
 #include <general/CameraWrapper.h>
 #include <terrain/Chunk.h>
+#include <terrain/Waterfall.h>
 #include <general/app_util.hpp>
 
 using namespace noise;
@@ -71,21 +72,24 @@ int main()
 
     // Set up world
     std::vector<std::vector<std::unique_ptr<Chunk>>> chunks(WORLD_SIZE);
-    
+    std::unique_ptr<Waterfall> waterfall;  // Waterfall at chunk (7,7)
+
     // Iterate through chunk grid
     for (int i = 0; i < WORLD_SIZE; i++) {
         for (int j = 0; j < WORLD_SIZE; j++) {
             std::string key = "Chunk" + std::to_string(i) +","+ std::to_string(j);
-            std::unique_ptr<Chunk> chunkPtr = std::make_unique<Chunk>();
-            chunks[i].push_back(std::move(chunkPtr));
 
             // Create waterfall in center chunk, SMOOTH landscape everywhere else
             if (i == 7 && j == 7) {
                 std::cout << "Creating WATERFALL at chunk (" << i << ", " << j << ")" << std::endl;
-                chunks[i][j]->createWaterfallLandscape(chunks[i][j]->CHUNK_SIZE * (i + 2), chunks[i][j]->CHUNK_SIZE * (j + 2));
-                worldVAO.createVBO(key, chunks[i][j]->render());  // Waterfall uses blocky render
+                waterfall = std::make_unique<Waterfall>();
+                waterfall->create(Waterfall::CHUNK_SIZE * (i + 2), Waterfall::CHUNK_SIZE * (j + 2));
+                worldVAO.createVBO(key, waterfall->render());  // Waterfall uses blocky render
+                chunks[i].push_back(nullptr);  // Placeholder to maintain array indices
             } else {
                 std::cout << "Creating SMOOTH TERRAIN at chunk (" << i << ", " << j << ")" << std::endl;
+                std::unique_ptr<Chunk> chunkPtr = std::make_unique<Chunk>();
+                chunks[i].push_back(std::move(chunkPtr));
                 chunks[i][j]->createSmoothLandscape(chunks[i][j]->CHUNK_SIZE * (i + 2), chunks[i][j]->CHUNK_SIZE * (j + 2));
                 worldVAO.createVBO(key, chunks[i][j]->renderSmooth());  // Regular terrain uses smooth render
             }
@@ -157,8 +161,10 @@ int main()
         // -----
         processInput(window);
 
-        // UPDATE FLUID PHYSICS - Update particles for waterfall chunk
-        chunks[7][7]->updateParticles(deltaTime);
+        // UPDATE FLUID PHYSICS - Update particles for waterfall
+        if (waterfall) {
+            waterfall->updateParticles(deltaTime);
+        }
 
         // render
         // ------
@@ -203,15 +209,17 @@ int main()
         renderWorld(worldVAO, worldShader, renderer, model, view, projection, glm::vec4(0, 0, 0, 0));
 
         // RENDER FLUID PHYSICS PARTICLES
-        std::vector<float> particleVertices = chunks[7][7]->renderParticles();
-        if (!particleVertices.empty()) {
-            worldVAO.createVBO("Particles", particleVertices);  // Recreate VBO each frame
-            worldVAO.bindVBO("Particles");
-            model = glm::mat4(1.0f);
-            model = glm::translate(model, glm::vec3(7 * 20, 0.0f, -7 * 20));  // Position at waterfall chunk
-            model = glm::scale(model, glm::vec3(20, 20, 20));
-            worldShader.setMat4("model", model);
-            renderer.draw(worldVAO, worldShader);
+        if (waterfall) {
+            std::vector<float> particleVertices = waterfall->renderParticles();
+            if (!particleVertices.empty()) {
+                worldVAO.createVBO("Particles", particleVertices);  // Recreate VBO each frame
+                worldVAO.bindVBO("Particles");
+                model = glm::mat4(1.0f);
+                model = glm::translate(model, glm::vec3(7 * 20, 0.0f, -7 * 20));  // Position at waterfall chunk
+                model = glm::scale(model, glm::vec3(20, 20, 20));
+                worldShader.setMat4("model", model);
+                renderer.draw(worldVAO, worldShader);
+            }
         }
 
         glfwSwapBuffers(window);

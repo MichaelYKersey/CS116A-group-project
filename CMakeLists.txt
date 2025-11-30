@@ -10,6 +10,7 @@ build_application(
     ./src/general/app_util.cpp
     ./src/terrain/Block.cpp
     ./src/terrain/Chunk.cpp
+    ./src/terrain/Waterfall.cpp
     ./src/noise/noiseutils.cpp
     
     # comment out all applications besides the one you want to run

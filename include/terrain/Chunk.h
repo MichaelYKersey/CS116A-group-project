@@ -13,16 +13,6 @@
 #include "vector"
 #include "map"
 
-// Water particle structure for fluid physics simulation
-struct WaterParticle {
-    glm::vec3 position;    // Current position in world space
-    glm::vec3 velocity;    // Current velocity (movement per second)
-    float lifetime;        // Time remaining before despawn (seconds)
-    bool active;           // Is this particle alive?
-
-    WaterParticle() : position(0.0f), velocity(0.0f), lifetime(0.0f), active(false) {}
-};
-
 class Chunk {
   private:
     module::Perlin myModule;                      // Generates Perlin noise
@@ -33,13 +23,7 @@ class Chunk {
     utils::WriterBMP writer;                      // File writer for BMP images
 
     Block*** block3D;                             // 3D array of blocks
-    float heightMapData[32][32];                  // Store height values for smooth terrain
-
-    // FLUID PHYSICS - Particle system
-    std::vector<WaterParticle> waterParticles;    // Pool of water particles
-    float particleSpawnTimer;                     // Time accumulator for spawning
-    std::mt19937 randomGen;                       // Random number generator
-    bool isWaterfallChunk;                        // Flag to identify waterfall chunk
+    float heightMapData[33][33];                  // Store height values for smooth terrain (33x33 for seamless edges)
 
   public:
     /**
@@ -89,13 +73,20 @@ class Chunk {
 
     /**
      * @brief Create a Cube object
-     * 
+     *
      * @param vertices   Store output vector
      * @param block      Block type
      * @param coordinate Position
      */
     void createCube(std::vector<float> &vertices, Block block, glm::vec3 coordinate);
-     
+
+    /**
+     * @brief Get access to internal block array
+     *
+     * @return Block*** Pointer to 3D block array
+     */
+    Block*** getBlocks() { return block3D; }
+
     /**
      * @brief Create Terrain based on noise
      *
@@ -113,25 +104,8 @@ class Chunk {
     void createSmoothLandscape(double dx, double dy);
 
     /**
-     * @brief Create Waterfall landscape with cliff and water pool
-     *
-     * @param dx Starting x coordinate
-     * @param dy Starting y coordinate
-     */
-    void createWaterfallLandscape(double dx, double dy);
-
-    /**
-     * @brief Create a tall tower to demonstrate shadows
-     *
-     * @param baseX Tower base X position
-     * @param baseZ Tower base Z position
-     * @param height Tower height
-     */
-    void createTower(int baseX, int baseZ, int height);
-
-    /**
      * @brief Clear Blocks
-     * 
+     *
      */
     void clear();
 
@@ -159,27 +133,6 @@ class Chunk {
      * @return std::vector<float> Vertex data for smooth terrain
      */
     std::vector<float> renderSmooth();
-
-    /**
-     * @brief Update fluid physics particles
-     *
-     * @param dt Delta time in seconds
-     */
-    void updateParticles(float dt);
-
-    /**
-     * @brief Spawn new water particles at waterfall source
-     *
-     * @param dt Delta time for spawn rate control
-     */
-    void spawnParticles(float dt);
-
-    /**
-     * @brief Render water particles as small cubes
-     *
-     * @return std::vector<float> Vertex data for particles
-     */
-    std::vector<float> renderParticles();
 
     static const int CHUNK_SIZE = 32;
 };
