@@ -467,7 +467,29 @@ void Chunk::createWaterfallLandscape(double dx, double dy) {
     // Enable particle system for this chunk
     isWaterfallChunk = true;
     std::cout << "[WATERFALL] Particle system ENABLED for fluid physics" << std::endl;
+
+    // Add TOWER to demonstrate shadows!
+    createTower(22, 16, 25);  // Tall tower next to waterfall
+    std::cout << "[WATERFALL] Added shadow demonstration tower" << std::endl;
     std::cout << "[WATERFALL] ========================================" << std::endl;
+}
+
+void Chunk::createTower(int baseX, int baseZ, int height) {
+    std::cout << "[TOWER] Building tower at (" << baseX << ", " << baseZ << ") height=" << height << std::endl;
+
+    // Build a 3x3 stone tower
+    for (int x = baseX - 1; x <= baseX + 1; x++) {
+        for (int z = baseZ - 1; z <= baseZ + 1; z++) {
+            for (int y = 0; y < height; y++) {
+                if (x >= 0 && x < CHUNK_SIZE && z >= 0 && z < CHUNK_SIZE && y < CHUNK_SIZE) {
+                    block3D[x][y][z].setActive(true);
+                    block3D[x][y][z].setTexture(BlockTexture::STONE);
+                }
+            }
+        }
+    }
+
+    std::cout << "[TOWER] Tower complete - ready to cast shadows!" << std::endl;
 }
 
 /* -------------------------------------------------------------------------- */

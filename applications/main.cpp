@@ -49,9 +49,9 @@ Camera camera(glm::vec3(90.0f, 40.0f, -90.0f), cameraUp, -135.0f, -20.0f);
 float deltaTime = 0.0f;	// time between current frame and last frame
 float lastFrame = 0.0f;
 
-// Light
-glm::vec3 lightPos(10.0f, 10.0f, -10.0f);
-glm::vec3 lightColor(1.0f, 1.0f, 1.0f);
+// Light (Sun position - high in the sky!)
+glm::vec3 lightPos(160.0f, 150.0f, -160.0f);  // High above waterfall, like a sun
+glm::vec3 lightColor(1.0f, 0.95f, 0.8f);      // Warm sunlight color
 
 int main()
 {
@@ -162,7 +162,8 @@ int main()
 
         // render
         // ------
-        glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+        // Clear with fog color for seamless horizon blend
+        glClearColor(0.7f, 0.8f, 0.9f, 1.0f);  // Match fog color
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); 
 
         // Enable Clipping Plane
@@ -176,11 +177,12 @@ int main()
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), 800.0f / 600.0f, 0.1f, 1000.0f);
         
-        // Render Lights
+        // Render SUN - big glowing sphere in the sky!
         lightShader.use();
         lightVAO.bind();
+        model = glm::mat4(1.0f);
         model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(0.2f));
+        model = glm::scale(model, glm::vec3(15.0f));  // BIG sun!
         lightShader.setMat4("model", model);
         lightShader.setMat4("view", view);
         lightShader.setMat4("projection", projection);
@@ -191,6 +193,13 @@ int main()
         glDisable(GL_CLIP_DISTANCE0);
         worldShader.use();
         worldShader.setFloat("time", currentFrame);  // Send time for water animation
+
+        // VOLUMETRIC FOG PARAMETERS - Atmospheric waterfall mist!
+        worldShader.setVec3("fogColor", glm::vec3(0.7f, 0.8f, 0.9f));  // Light blue-gray fog
+        worldShader.setFloat("fogDensity", 0.02f);   // Fog thickness
+        worldShader.setFloat("fogStart", 50.0f);     // Fog starts at distance 50
+        worldShader.setFloat("fogEnd", 250.0f);      // Full fog at distance 250
+
         renderWorld(worldVAO, worldShader, renderer, model, view, projection, glm::vec4(0, 0, 0, 0));
 
         // RENDER FLUID PHYSICS PARTICLES

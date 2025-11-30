@@ -86,6 +86,13 @@ uniform vec3 viewPos;
 uniform vec3 lightPos;
 uniform vec3 lightColor;
 uniform float time;
+
+// VOLUMETRIC FOG PARAMETERS
+uniform vec3 fogColor;      // Color of fog (light blue/gray)
+uniform float fogDensity;   // How thick the fog is
+uniform float fogStart;     // Distance where fog begins
+uniform float fogEnd;       // Distance where fog is maximum
+
 out vec4 FragColor;
 void main()
 {   
@@ -126,5 +133,18 @@ void main()
         }
     }
 
-    FragColor = vec4(result, 1.0);
+    // VOLUMETRIC FOG - Distance-based atmospheric fog
+    float distance = length(viewPos - FragPos);  // Distance from camera to fragment
+
+    // Linear fog between fogStart and fogEnd
+    float fogFactor = (fogEnd - distance) / (fogEnd - fogStart);
+    fogFactor = clamp(fogFactor, 0.0, 1.0);  // Clamp between 0 (full fog) and 1 (no fog)
+
+    // Alternative: Exponential fog (more realistic)
+    // fogFactor = exp(-fogDensity * distance);
+
+    // Mix fragment color with fog color based on distance
+    vec3 finalColor = mix(fogColor, result, fogFactor);
+
+    FragColor = vec4(finalColor, 1.0);
 }

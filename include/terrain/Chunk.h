@@ -121,6 +121,15 @@ class Chunk {
     void createWaterfallLandscape(double dx, double dy);
 
     /**
+     * @brief Create a tall tower to demonstrate shadows
+     *
+     * @param baseX Tower base X position
+     * @param baseZ Tower base Z position
+     * @param height Tower height
+     */
+    void createTower(int baseX, int baseZ, int height);
+
+    /**
      * @brief Clear Blocks
      * 
      */
