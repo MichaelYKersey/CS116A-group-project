@@ -41,8 +41,8 @@ float lastX =  800.0f / 2.0;
 float lastY =  600.0 / 2.0;
 float fov   =  45.0f;
 
-// Create Camera
-Camera camera(cameraPos, cameraUp, -90.0f, 0.0f);
+// Create Camera - Start high up looking down at terrain
+Camera camera(glm::vec3(250.0f, 100.0f, 250.0f), cameraUp, -135.0f, -30.0f);
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -77,7 +77,15 @@ int main()
             std::string key = "Chunk" + std::to_string(i) +","+ std::to_string(j);
             std::unique_ptr<Chunk> chunkPtr = std::make_unique<Chunk>();
             chunks[i].push_back(std::move(chunkPtr));
-            chunks[i][j]->createLandscape(chunks[i][j]->CHUNK_SIZE * (i + 2), chunks[i][j]->CHUNK_SIZE * (j + 2));
+
+            // Create waterfall in center chunk, normal landscape everywhere else
+            if (i == 7 && j == 7) {
+                std::cout << "Creating WATERFALL at chunk (" << i << ", " << j << ")" << std::endl;
+                chunks[i][j]->createWaterfallLandscape(chunks[i][j]->CHUNK_SIZE * (i + 2), chunks[i][j]->CHUNK_SIZE * (j + 2));
+            } else {
+                chunks[i][j]->createLandscape(chunks[i][j]->CHUNK_SIZE * (i + 2), chunks[i][j]->CHUNK_SIZE * (j + 2));
+            }
+
             worldVAO.createVBO(key, chunks[i][j]->render());
         }
     }
@@ -157,9 +165,16 @@ int main()
 
         // Initialize Transformation Matrices
         glm::mat4 model = glm::mat4(1.0f);
-        glm::mat4 view = camera.getViewMatrix();
+
+        // Fixed camera for diorama view - FOCUS ON THE WATERFALL MOUNTAIN!
+        // Waterfall is at chunk (7, 7) which is position (140, 0, -140)
+        glm::vec3 waterfallCenter = glm::vec3(140.0f, 10.0f, -140.0f);
+        // Position camera to see the waterfall from a nice angle
+        glm::vec3 cameraPosition = glm::vec3(waterfallCenter.x - 50.0f, 40.0f, waterfallCenter.z + 50.0f);
+        glm::mat4 view = glm::lookAt(cameraPosition, waterfallCenter, glm::vec3(0, 1, 0));
+
         glm::mat4 projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(camera.zoom), 800.0f / 600.0f, 0.1f, 200.0f);
+        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 1000.0f);
         
         // Render Lights
         lightShader.use();
@@ -174,6 +189,8 @@ int main()
 
         // Generate World
         glDisable(GL_CLIP_DISTANCE0);
+        worldShader.use();
+        worldShader.setFloat("time", currentFrame);  // Send time for water animation
         renderWorld(worldVAO, worldShader, renderer, model, view, projection, glm::vec4(0, 0, 0, 0));
 
         glfwSwapBuffers(window);
@@ -205,13 +222,13 @@ void renderWorld(VertexArrayWrapper &worldVAO, Shader worldShader, Renderer rend
     for (int i = 0; i < WORLD_SIZE; ++i) {
         for (int j = 0; j < WORLD_SIZE; ++j) {
             std::string key = "Chunk" + std::to_string(i) +","+ std::to_string(j);
-            std::unique_ptr<Chunk> chunkPtr = std::make_unique<Chunk>();
+            // Removed memory leak - chunk already created during initialization
             worldVAO.bindVBO(key);
 
-            // Draw
+            // Draw - translate THEN scale to avoid gaps between chunks
             model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(i * 20, 0.0f, -j * 20));
             model = glm::scale(model, glm::vec3(20, 20, 20));
-            model = glm::translate(model, glm::vec3(i, 0.0f, -j));
             worldShader.setMat4("model", model);
 
             renderer.draw(worldVAO, worldShader);

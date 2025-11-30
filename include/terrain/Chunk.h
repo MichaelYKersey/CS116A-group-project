@@ -81,11 +81,19 @@ class Chunk {
      
     /**
      * @brief Create Terrain based on noise
-     * 
+     *
      * @param dx Starting x coordinate
      * @param dy Starting y coordinate
      */
     void createLandscape(double dx, double dy);
+
+    /**
+     * @brief Create Waterfall landscape with cliff and water pool
+     *
+     * @param dx Starting x coordinate
+     * @param dy Starting y coordinate
+     */
+    void createWaterfallLandscape(double dx, double dy);
 
     /**
      * @brief Clear Blocks

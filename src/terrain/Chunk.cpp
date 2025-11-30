@@ -1,4 +1,5 @@
 #include <terrain/Chunk.h>
+#include <algorithm>  // For std::max
 
 /* -------------------------------------------------------------------------- */
 /*                                  Cube Mesh                                 */
@@ -60,13 +61,15 @@ std::map<BlockTexture, glm::vec3> textureMap = {
   {BlockTexture::STONE,   glm::vec3(0.5725f, 0.5569f, 0.5216f)},
   {BlockTexture::ICE,     glm::vec3(0.2549f, 0.9608f, 0.9647f)},
   {BlockTexture::SNOW,    glm::vec3(1.0f,    1.0f,    1.0f)},
+  {BlockTexture::WATER,   glm::vec3(0.2f,    0.5f,    0.9f)},  // Blue water
 };
 
 std::map<BlockTexture, int> textureID = {
   {BlockTexture::SAND,    0},
   {BlockTexture::GRASS,   1},
   {BlockTexture::STONE,   2},
-  {BlockTexture::SNOW,    3},
+  {BlockTexture::SNOW,    2},  // Snow and stone both gray - that's OK
+  {BlockTexture::WATER,   3},  // Water gets its own ID = 3 (BLUE!)
 };
 
 Chunk::Chunk() {
@@ -247,4 +250,78 @@ std::vector<float> Chunk::render() {
   }
 
   return vertices;
+}
+
+void Chunk::createWaterfallLandscape(double dx, double dy) {
+    // Create a TALL MOUNTAIN with waterfall!
+    // Clear everything first
+    for (int x = 0; x < CHUNK_SIZE; x++) {
+        for (int y = 0; y < CHUNK_SIZE; y++) {
+            for (int z = 0; z < CHUNK_SIZE; z++) {
+                block3D[x][y][z].setActive(false);
+            }
+        }
+    }
+
+    // Build TALL MOUNTAIN - stone pyramid
+    for (int x = 0; x < CHUNK_SIZE; x++) {
+        for (int z = 0; z < CHUNK_SIZE; z++) {
+            // Height based on distance from center (pyramid shape)
+            int centerX = CHUNK_SIZE / 2;
+            int centerZ = CHUNK_SIZE / 2;
+            int distX = abs(x - centerX);
+            int distZ = abs(z - centerZ);
+            int maxDist = std::max(distX, distZ);
+            int height = CHUNK_SIZE - maxDist - 2;  // Pyramid gets shorter toward edges
+
+            if (height < 3) height = 3;  // Minimum base height
+
+            // Fill with stone up to calculated height
+            for (int y = 0; y < height; y++) {
+                block3D[x][y][z].setActive(true);
+                block3D[x][y][z].setTexture(BlockTexture::STONE);
+            }
+        }
+    }
+
+    // Create WATER LAKE at the top center of mountain
+    for (int x = 10; x < 22; x++) {
+        for (int z = 10; z < 22; z++) {
+            // Add 3 layers of water at mountain top
+            for (int y = 22; y < 26; y++) {
+                block3D[x][y][z].setActive(true);
+                block3D[x][y][z].setTexture(BlockTexture::WATER);
+            }
+        }
+    }
+
+    // CARVE WATERFALL PATH - vertical channel down one side
+    for (int z = 14; z < 18; z++) {
+        for (int y = 0; y < 24; y++) {
+            // Remove blocks to create waterfall channel
+            block3D[10][y][z].setActive(false);
+            block3D[11][y][z].setActive(false);
+            block3D[12][y][z].setActive(false);
+        }
+    }
+
+    // Add FALLING WATER in the channel - FILL ENTIRE CHANNEL WIDTH!
+    for (int x = 10; x <= 12; x++) {  // Fill all 3 columns of the carved channel
+        for (int z = 14; z < 18; z++) {
+            for (int y = 3; y < 24; y++) {  // Every block for continuous waterfall
+                block3D[x][y][z].setActive(true);
+                block3D[x][y][z].setTexture(BlockTexture::WATER);
+            }
+        }
+    }
+
+    // Create POOL at bottom where water lands
+    for (int x = 6; x < 14; x++) {
+        for (int z = 12; z < 20; z++) {
+            for (int y = 0; y < 4; y++) {
+                block3D[x][y][z].setActive(true);
+                block3D[x][y][z].setTexture(BlockTexture::WATER);
+            }
+        }
+    }
 }
