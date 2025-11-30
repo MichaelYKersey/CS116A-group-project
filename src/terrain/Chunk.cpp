@@ -56,21 +56,23 @@ std::vector<float> cube = {
 /* -------------------------------------------------------------------------- */
 
 std::map<BlockTexture, glm::vec3> textureMap = {
-  {BlockTexture::DEFAULT, glm::vec3(0.04f,   0.44f,   0.15f)},
-  {BlockTexture::GRASS,   glm::vec3(0.04f,   0.44f,   0.15f)},
-  {BlockTexture::SAND,    glm::vec3(0.761f,  0.698f,  0.502f)},
-  {BlockTexture::STONE,   glm::vec3(0.5725f, 0.5569f, 0.5216f)},
-  {BlockTexture::ICE,     glm::vec3(0.2549f, 0.9608f, 0.9647f)},
-  {BlockTexture::SNOW,    glm::vec3(1.0f,    1.0f,    1.0f)},
-  {BlockTexture::WATER,   glm::vec3(0.2f,    0.5f,    0.9f)},  // Blue water
+  {BlockTexture::DEFAULT,        glm::vec3(0.04f,   0.44f,   0.15f)},
+  {BlockTexture::GRASS,          glm::vec3(0.04f,   0.44f,   0.15f)},
+  {BlockTexture::SAND,           glm::vec3(0.761f,  0.698f,  0.502f)},
+  {BlockTexture::STONE,          glm::vec3(0.5725f, 0.5569f, 0.5216f)},
+  {BlockTexture::ICE,            glm::vec3(0.2549f, 0.9608f, 0.9647f)},
+  {BlockTexture::SNOW,           glm::vec3(1.0f,    1.0f,    1.0f)},
+  {BlockTexture::WATER,          glm::vec3(0.2f,    0.5f,    0.9f)},     // Dark blue water
+  {BlockTexture::WATER_PARTICLE, glm::vec3(0.4f,    0.85f,   1.0f)},    // Light cyan particles!
 };
 
 std::map<BlockTexture, int> textureID = {
-  {BlockTexture::SAND,    0},
-  {BlockTexture::GRASS,   1},
-  {BlockTexture::STONE,   2},
-  {BlockTexture::SNOW,    2},  // Snow and stone both gray - that's OK
-  {BlockTexture::WATER,   3},  // Water gets its own ID = 3 (BLUE!)
+  {BlockTexture::SAND,           0},
+  {BlockTexture::GRASS,          1},
+  {BlockTexture::STONE,          2},
+  {BlockTexture::SNOW,           2},  // Snow and stone both gray - that's OK
+  {BlockTexture::WATER,          3},  // Dark blue water (static blocks)
+  {BlockTexture::WATER_PARTICLE, 4},  // Light cyan particles (fluid physics!)
 };
 
 Chunk::Chunk() {
@@ -84,6 +86,12 @@ Chunk::Chunk() {
   }
 
   setupHeightMap();
+
+  // Initialize particle system
+  waterParticles.reserve(2000);  // Pre-allocate for ~2000 particles
+  particleSpawnTimer = 0.0f;
+  randomGen = std::mt19937(std::random_device{}());
+  isWaterfallChunk = false;  // Will be set to true for waterfall chunk
 }
 
 Chunk::~Chunk() {
@@ -455,5 +463,193 @@ void Chunk::createWaterfallLandscape(double dx, double dy) {
     }
     std::cout << "[WATERFALL] Created pool with " << poolBlocks << " water blocks at bottom" << std::endl;
     std::cout << "[WATERFALL] Waterfall complete! Total water: " << (lakeBlocks + fallingWaterBlocks + poolBlocks) << std::endl;
+
+    // Enable particle system for this chunk
+    isWaterfallChunk = true;
+    std::cout << "[WATERFALL] Particle system ENABLED for fluid physics" << std::endl;
     std::cout << "[WATERFALL] ========================================" << std::endl;
+}
+
+/* -------------------------------------------------------------------------- */
+/*                          FLUID PHYSICS - Particles                         */
+/* -------------------------------------------------------------------------- */
+
+void Chunk::spawnParticles(float dt) {
+    if (!isWaterfallChunk) return;  // Only spawn in waterfall chunk
+
+    particleSpawnTimer += dt;
+
+    // Spawn rate: ~60 particles per second (more dramatic!)
+    float spawnInterval = 1.0f / 60.0f;
+
+    while (particleSpawnTimer >= spawnInterval) {
+        particleSpawnTimer -= spawnInterval;
+
+        // Try to find inactive particle to reuse
+        WaterParticle* particle = nullptr;
+        for (auto& p : waterParticles) {
+            if (!p.active) {
+                particle = &p;
+                break;
+            }
+        }
+
+        // If no inactive particle, create new one
+        if (!particle) {
+            waterParticles.emplace_back();
+            particle = &waterParticles.back();
+        }
+
+        // SPAWN FROM ALL 4 SIDES OF MOUNTAIN!
+        std::uniform_real_distribution<float> randVel(-0.8f, 0.8f);
+        std::uniform_int_distribution<int> sideChoice(0, 3);  // Pick which side: 0=North, 1=South, 2=East, 3=West
+
+        int side = sideChoice(randomGen);
+
+        // Lake is at x=10-22, z=10-22, y=22-26
+        // Mountain center is at x=16, z=16
+
+        if (side == 0) {
+            // NORTH SIDE (positive Z edge)
+            std::uniform_real_distribution<float> distX(11.0f, 21.0f);
+            particle->position = glm::vec3(distX(randomGen), 24.0f, 21.5f);
+            particle->velocity = glm::vec3(randVel(randomGen) * 0.5f, -0.5f, 3.0f + randVel(randomGen));  // Shoot NORTH
+        }
+        else if (side == 1) {
+            // SOUTH SIDE (negative Z edge)
+            std::uniform_real_distribution<float> distX(11.0f, 21.0f);
+            particle->position = glm::vec3(distX(randomGen), 24.0f, 10.5f);
+            particle->velocity = glm::vec3(randVel(randomGen) * 0.5f, -0.5f, -3.0f + randVel(randomGen));  // Shoot SOUTH
+        }
+        else if (side == 2) {
+            // EAST SIDE (positive X edge)
+            std::uniform_real_distribution<float> distZ(11.0f, 21.0f);
+            particle->position = glm::vec3(21.5f, 24.0f, distZ(randomGen));
+            particle->velocity = glm::vec3(3.0f + randVel(randomGen), -0.5f, randVel(randomGen) * 0.5f);  // Shoot EAST
+        }
+        else {
+            // WEST SIDE (negative X edge) - original waterfall side
+            std::uniform_real_distribution<float> distZ(11.0f, 21.0f);
+            particle->position = glm::vec3(10.5f, 24.0f, distZ(randomGen));
+            particle->velocity = glm::vec3(-3.0f + randVel(randomGen), -0.5f, randVel(randomGen) * 0.5f);  // Shoot WEST
+        }
+
+        particle->lifetime = 4.0f;  // Live for 4 seconds
+        particle->active = true;
+    }
+}
+
+void Chunk::updateParticles(float dt) {
+    if (!isWaterfallChunk) return;  // Only update in waterfall chunk
+
+    int activeCount = 0;
+
+    for (auto& particle : waterParticles) {
+        if (!particle.active) continue;
+
+        activeCount++;
+
+        // PHYSICS: Apply gravity
+        const float GRAVITY = 9.8f;  // m/s^2 downward
+        particle.velocity.y -= GRAVITY * dt;
+
+        // UPDATE: Move particle based on velocity
+        particle.position += particle.velocity * dt;
+
+        // COLLISION: Check if particle hit the ground/pool
+        float poolLevel = 3.5f;  // Pool surface height
+        if (particle.position.y <= poolLevel) {
+            // SPLASH! Bounce with more energy for visibility
+            particle.position.y = poolLevel;  // Keep above ground
+            particle.velocity.y = -particle.velocity.y * 0.6f;  // Bounce (60% energy - more visible!)
+            particle.velocity.x *= 0.8f;  // Less friction
+            particle.velocity.z *= 0.8f;
+
+            // If moving too slow, stop bouncing
+            if (std::abs(particle.velocity.y) < 0.3f) {
+                particle.velocity.y = 0.0f;
+                particle.velocity.x *= 0.3f;
+                particle.velocity.z *= 0.3f;
+            }
+        }
+
+        // LIFETIME: Decrease and deactivate when expired
+        particle.lifetime -= dt;
+        if (particle.lifetime <= 0.0f) {
+            particle.active = false;
+        }
+
+        // OUT OF BOUNDS: Deactivate if particle falls too far
+        if (particle.position.y < -5.0f || particle.position.y > 50.0f) {
+            particle.active = false;
+        }
+    }
+
+    // Spawn new particles
+    spawnParticles(dt);
+
+    // Optional: Log every few seconds
+    static float logTimer = 0.0f;
+    logTimer += dt;
+    if (logTimer > 2.0f) {
+        std::cout << "[PARTICLES] Active: " << activeCount << " / " << waterParticles.size() << std::endl;
+        logTimer = 0.0f;
+    }
+}
+
+std::vector<float> Chunk::renderParticles() {
+    std::vector<float> vertices;
+
+    if (!isWaterfallChunk) return vertices;
+
+    // Render each active particle as a small cube
+    for (const auto& particle : waterParticles) {
+        if (!particle.active) continue;
+
+        // Particle position in chunk-local coordinates (0-32 range)
+        glm::vec3 localPos = particle.position;
+
+        // Skip if particle is outside chunk bounds
+        if (localPos.x < 0 || localPos.x >= CHUNK_SIZE ||
+            localPos.y < 0 || localPos.y >= CHUNK_SIZE ||
+            localPos.z < 0 || localPos.z >= CHUNK_SIZE) {
+            continue;
+        }
+
+        // Create small cube at particle position
+        // Size = 0.5 blocks (half size)
+        float size = 0.5f;
+
+        // Encode position (scale to 0-32 integer range for encoding)
+        int x = (int)(localPos.x * 2.0f);  // Scale up for sub-block precision
+        int y = (int)(localPos.y * 2.0f);
+        int z = (int)(localPos.z * 2.0f);
+
+        // Clamp to valid range (0-63 for 6-bit encoding)
+        x = std::min(63, std::max(0, x));
+        y = std::min(63, std::max(0, y));
+        z = std::min(63, std::max(0, z));
+
+        // Normal pointing up (for lighting)
+        int normX = 1;  // 0
+        int normY = 2;  // +1 (up)
+        int normZ = 1;  // 0
+
+        // Water color (bright cyan/white for visibility)
+        int colorID = 3;  // Water ID
+
+        // Create a visible cube for this particle (reuse createCube logic)
+        // Use a temporary block at this position with LIGHTER COLOR
+        Block particleBlock;
+        particleBlock.setActive(true);
+        particleBlock.setTexture(BlockTexture::WATER_PARTICLE);  // Light cyan!
+
+        // Convert back to glm::vec3 for createCube
+        glm::vec3 cubePos(localPos.x, localPos.y, localPos.z);
+
+        // Add full cube mesh for this particle (makes it MUCH more visible)
+        createCube(vertices, particleBlock, cubePos);
+    }
+
+    return vertices;
 }

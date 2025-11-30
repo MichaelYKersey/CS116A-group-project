@@ -92,7 +92,7 @@ int main()
     }
 
     std::cout << "iterated through chunks" << std::endl;
-    
+
     // Setup lights
     std::vector<float> lights = {
         // positions          
@@ -156,6 +156,9 @@ int main()
         // -----
         processInput(window);
 
+        // UPDATE FLUID PHYSICS - Update particles for waterfall chunk
+        chunks[7][7]->updateParticles(deltaTime);
+
         // render
         // ------
         glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
@@ -193,6 +196,18 @@ int main()
         worldShader.use();
         worldShader.setFloat("time", currentFrame);  // Send time for water animation
         renderWorld(worldVAO, worldShader, renderer, model, view, projection, glm::vec4(0, 0, 0, 0));
+
+        // RENDER FLUID PHYSICS PARTICLES
+        std::vector<float> particleVertices = chunks[7][7]->renderParticles();
+        if (!particleVertices.empty()) {
+            worldVAO.createVBO("Particles", particleVertices);  // Recreate VBO each frame
+            worldVAO.bindVBO("Particles");
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(7 * 20, 0.0f, -7 * 20));  // Position at waterfall chunk
+            model = glm::scale(model, glm::vec3(20, 20, 20));
+            worldShader.setMat4("model", model);
+            renderer.draw(worldVAO, worldShader);
+        }
 
         glfwSwapBuffers(window);
         glfwPollEvents();

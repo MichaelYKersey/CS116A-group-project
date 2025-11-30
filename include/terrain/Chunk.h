@@ -13,6 +13,16 @@
 #include "vector"
 #include "map"
 
+// Water particle structure for fluid physics simulation
+struct WaterParticle {
+    glm::vec3 position;    // Current position in world space
+    glm::vec3 velocity;    // Current velocity (movement per second)
+    float lifetime;        // Time remaining before despawn (seconds)
+    bool active;           // Is this particle alive?
+
+    WaterParticle() : position(0.0f), velocity(0.0f), lifetime(0.0f), active(false) {}
+};
+
 class Chunk {
   private:
     module::Perlin myModule;                      // Generates Perlin noise
@@ -24,6 +34,12 @@ class Chunk {
 
     Block*** block3D;                             // 3D array of blocks
     float heightMapData[32][32];                  // Store height values for smooth terrain
+
+    // FLUID PHYSICS - Particle system
+    std::vector<WaterParticle> waterParticles;    // Pool of water particles
+    float particleSpawnTimer;                     // Time accumulator for spawning
+    std::mt19937 randomGen;                       // Random number generator
+    bool isWaterfallChunk;                        // Flag to identify waterfall chunk
 
   public:
     /**
@@ -134,6 +150,27 @@ class Chunk {
      * @return std::vector<float> Vertex data for smooth terrain
      */
     std::vector<float> renderSmooth();
+
+    /**
+     * @brief Update fluid physics particles
+     *
+     * @param dt Delta time in seconds
+     */
+    void updateParticles(float dt);
+
+    /**
+     * @brief Spawn new water particles at waterfall source
+     *
+     * @param dt Delta time for spawn rate control
+     */
+    void spawnParticles(float dt);
+
+    /**
+     * @brief Render water particles as small cubes
+     *
+     * @return std::vector<float> Vertex data for particles
+     */
+    std::vector<float> renderParticles();
 
     static const int CHUNK_SIZE = 32;
 };

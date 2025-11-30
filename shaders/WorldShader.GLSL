@@ -13,10 +13,10 @@ out float IsWater;  // Flag to identify water in fragment shader
 
 void main()
 {
-    //Deconstruct vertex_data 
+    //Deconstruct vertex_data
     int aPos = int(vertex_data) & ((1 << 18) - 1); //First 18 bits
     int aNormal = (int(vertex_data) >> 18) & ((1 << 6) - 1); //Next 6 bits
-    int color = (int(vertex_data) >> 24) & ((1 << 2) - 1); //Next 2 bits
+    int color = (int(vertex_data) >> 24) & ((1 << 3) - 1); //Next 3 bits (0-7)
 
     //Deconstruct position integer into x, y, z components
     int x = aPos & ((1 << 6) - 1); 
@@ -37,9 +37,14 @@ void main()
         aColor = vec3(0.04,0.44,0.15);     // GRASS (green)
     }else if(color == 2){
         aColor = vec3(0.572,0.557,0.522);  // STONE/SNOW (gray/white)
-    }else{
-        aColor = vec3(0.1, 0.3, 0.8);      // WATER (deep blue!)
+    }else if(color == 3){
+        aColor = vec3(0.1, 0.3, 0.8);      // WATER - Dark blue (static blocks)
         isWater = true;
+    }else if(color == 4){
+        aColor = vec3(0.4, 0.85, 1.0);     // WATER PARTICLES - Light cyan (fluid physics!)
+        isWater = true;
+    }else{
+        aColor = vec3(1.0, 0.0, 1.0);      // ERROR - magenta (shouldn't happen)
     }
 
     vec4 normalizedPos = vec4(x / 32.0 - 0.5, y / 32.0 - 0.5, z / 32.0 - 0.5, 1.0);
