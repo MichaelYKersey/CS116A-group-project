@@ -41,8 +41,9 @@ float lastX =  800.0f / 2.0;
 float lastY =  600.0 / 2.0;
 float fov   =  45.0f;
 
-// Create Camera - Start high up looking down at terrain
-Camera camera(glm::vec3(250.0f, 100.0f, 250.0f), cameraUp, -135.0f, -30.0f);
+// Create Camera - Start at waterfall with nice viewing angle
+// Waterfall is at chunk (7,7) = position (140, 0, -140)
+Camera camera(glm::vec3(90.0f, 40.0f, -90.0f), cameraUp, -135.0f, -20.0f);
 
 // timing
 float deltaTime = 0.0f;	// time between current frame and last frame
@@ -170,15 +171,10 @@ int main()
         // Initialize Transformation Matrices
         glm::mat4 model = glm::mat4(1.0f);
 
-        // Fixed camera for diorama view - FOCUS ON THE WATERFALL MOUNTAIN!
-        // Waterfall is at chunk (7, 7) which is position (140, 0, -140)
-        glm::vec3 waterfallCenter = glm::vec3(140.0f, 10.0f, -140.0f);
-        // Position camera to see the waterfall from a nice angle
-        glm::vec3 cameraPosition = glm::vec3(waterfallCenter.x - 50.0f, 40.0f, waterfallCenter.z + 50.0f);
-        glm::mat4 view = glm::lookAt(cameraPosition, waterfallCenter, glm::vec3(0, 1, 0));
-
-        glm::mat4 projection = glm::mat4(1.0f);
-        projection = glm::perspective(glm::radians(45.0f), 800.0f / 600.0f, 0.1f, 1000.0f);
+        // FREE CAMERA - Use keyboard/mouse controls to navigate!
+        // WASD: Move, Mouse: Look around, Scroll: Zoom
+        glm::mat4 view = camera.getViewMatrix();
+        glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), 800.0f / 600.0f, 0.1f, 1000.0f);
         
         // Render Lights
         lightShader.use();
