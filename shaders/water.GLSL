@@ -13,22 +13,48 @@ void main()
 out vec4 FragColor;
 in vec4 frag__world_pos;
 
-//popular random num generator expaned to vec4
-// outputs 0 to 1
-float rand(vec4 co){
-    vec4 const_vec = vec4(12.9898,78.233,-9898.12,-233.78);
-    return fract(sin(dot(co.xyzw+const_vec,-const_vec.yxwz)) * 43758.5453);
+// hash ripped form internet (https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl)
+// A single iteration of Bob Jenkins' One-At-A-Time hashing algorithm.
+uint hash( uint x ) {
+    x += ( x << 10u );
+    x ^= ( x >>  6u );
+    x += ( x <<  3u );
+    x ^= ( x >> 11u );
+    x += ( x << 15u );
+    return x;
 }
+// Compound versions of the hashing algorithm I whipped together.
+uint hash( uvec2 v ) { return hash( v.x ^ hash(v.y)                         ); }
+uint hash( uvec3 v ) { return hash( v.x ^ hash(v.y) ^ hash(v.z)             ); }
+uint hash( uvec4 v ) { return hash( v.x ^ hash(v.y) ^ hash(v.z) ^ hash(v.w) ); }
+// Construct a float with half-open range [0:1] using low 23 bits.
+// All zeroes yields 0.0, all ones yields the next smallest representable value below 1.0.
+float floatConstruct( uint m ) {
+    const uint ieeeMantissa = 0x007FFFFFu; // binary32 mantissa bitmask
+    const uint ieeeOne      = 0x3F800000u; // 1.0 in IEEE binary32
+
+    m &= ieeeMantissa;                     // Keep only mantissa bits (fractional part)
+    m |= ieeeOne;                          // Add fractional part to 1.0
+
+    float  f = uintBitsToFloat( m );       // Range [1:2]
+    return f - 1.0;                        // Range [0:1]
+}
+// Pseudo-random value in half-open range [0:1].
+float random( float x ) { return floatConstruct(hash(floatBitsToUint(x))); }
+float random( vec2  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
+float random( vec3  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
+float random( vec4  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
+//end of RNG generator code copied
 
 //3d + time is 4 dimessions
 vec4 get_rand_unit_vec(vec4 in_vec)
 {
     //gen rand values then normalize (it's not uniform but oh well)
     vec4 rand_vec = vec4 (
-        rand(in_vec.wxyz),
-        rand(in_vec.zwxy),
-        rand(in_vec.yzwx),
-        rand(in_vec.wzyx)
+        random(in_vec.wxyz),
+        random(in_vec.zwxy),
+        random(in_vec.yzwx),
+        random(in_vec.wzyx)
     );
     //map from 0 to 1 to -1 to 1
     rand_vec = rand_vec*2.0f-1.0f;
@@ -52,6 +78,7 @@ float perlin_interpolate(float a, float b, float t)
     overall_t += -15.0f * pt;
     pt *= t;
     overall_t += 10.0f * pt;
+    // float overall_t = t*t*t;
     return (a *overall_t) + (b * (1-overall_t));
 }
 
@@ -143,11 +170,11 @@ void main()
     ivec4 int_world_pos = ivec4(scaled_world_pos);
 
     vec4 noised = get_rand_unit_vec(scaled_world_pos);
-    float val = dot_sample(int_world_pos,scaled_world_pos);
+    FragColor = get_color() * noised;
+    // float val = dot_sample(int_world_pos,scaled_world_pos);
     // float val = dot_sample(int_world_pos+ivec4(1,1,1,1),scaled_world_pos);
     // float val = compute_perlin_noise(scaled_world_pos);
-    // FragColor = get_color() * noised;
-    FragColor = get_color() * val;
+    // FragColor = get_color() * val;
     FragColor.w = 1.0f;
 }
 
