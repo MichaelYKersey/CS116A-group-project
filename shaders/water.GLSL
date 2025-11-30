@@ -14,6 +14,7 @@ out vec4 FragColor;
 in vec4 frag__world_pos;
 
 //popular random num generator expaned to vec4
+// outputs 0 to 1
 float rand(vec4 co){
     vec4 const_vec = vec4(12.9898,78.233,-9898.12,-233.78);
     return fract(sin(dot(co.xyzw+const_vec,-const_vec.yxwz)) * 43758.5453);
@@ -28,7 +29,9 @@ vec4 get_rand_unit_vec(vec4 in_vec)
         rand(in_vec.zwxy),
         rand(in_vec.yzwx),
         rand(in_vec.wzyx)
-    );    
+    );
+    //map from 0 to 1 to -1 to 1
+    rand_vec = rand_vec*2.0f-1.0f;
     return normalize(rand_vec);
 }
 
@@ -36,8 +39,8 @@ vec4 get_rand_unit_vec(vec4 in_vec)
 float dot_sample(vec4 rand_val_pos, vec4 perlin_pos)
 {
     vec4 rand_vec = get_rand_unit_vec(rand_val_pos);
-    vec4 dist_stance = perlin_pos-rand_val_pos;
-    return dot(rand_vec,dist_stance);
+    vec4 diff_vec = perlin_pos-rand_val_pos;
+    return dot(rand_vec,diff_vec);
 }
 // interpolating a to b using 6t^4 - 15t^5 + 10t^6
 float perlin_interpolate(float a, float b, float t)
@@ -107,24 +110,24 @@ float compute_perlin_noise(vec4 perlin_pos)
 
     vec4 fract_pos = fract(perlin_pos);
 
-    float s000 = perlin_interpolate(s0000,s0001,fract_pos.x);
-    float s001 = perlin_interpolate(s0010,s0011,fract_pos.x);
-    float s010 = perlin_interpolate(s0100,s0101,fract_pos.x);
-    float s011 = perlin_interpolate(s0110,s0111,fract_pos.x);
-    float s100 = perlin_interpolate(s1000,s1001,fract_pos.x);
-    float s101 = perlin_interpolate(s1010,s1011,fract_pos.x);
-    float s110 = perlin_interpolate(s1100,s1101,fract_pos.x);
-    float s111 = perlin_interpolate(s1110,s1111,fract_pos.x);
+    float s000 = perlin_interpolate(s0000,s0001,fract_pos.w);
+    float s001 = perlin_interpolate(s0010,s0011,fract_pos.w);
+    float s010 = perlin_interpolate(s0100,s0101,fract_pos.w);
+    float s011 = perlin_interpolate(s0110,s0111,fract_pos.w);
+    float s100 = perlin_interpolate(s1000,s1001,fract_pos.w);
+    float s101 = perlin_interpolate(s1010,s1011,fract_pos.w);
+    float s110 = perlin_interpolate(s1100,s1101,fract_pos.w);
+    float s111 = perlin_interpolate(s1110,s1111,fract_pos.w);
 
-    float s00 = perlin_interpolate(s000,s001,fract_pos.y);
-    float s01 = perlin_interpolate(s010,s011,fract_pos.y);
-    float s10 = perlin_interpolate(s100,s101,fract_pos.y);
-    float s11 = perlin_interpolate(s110,s111,fract_pos.y);
+    float s00 = perlin_interpolate(s000,s001,fract_pos.z);
+    float s01 = perlin_interpolate(s010,s011,fract_pos.z);
+    float s10 = perlin_interpolate(s100,s101,fract_pos.z);
+    float s11 = perlin_interpolate(s110,s111,fract_pos.z);
 
-    float s0 = perlin_interpolate(s00,s01,fract_pos.z);
-    float s1 = perlin_interpolate(s10,s11,fract_pos.z);
+    float s0 = perlin_interpolate(s00,s01,fract_pos.y);
+    float s1 = perlin_interpolate(s10,s11,fract_pos.y);
 
-    float s = perlin_interpolate(s0,s1,fract_pos.w);
+    float s = perlin_interpolate(s0,s1,fract_pos.x);
     return s;
 }
 
@@ -135,17 +138,16 @@ vec4 get_color()
 
 void main()
 {
-    // FragColor = vec4(1.0f,1.0f,1.0f, 1.0f);
-    // FragColor = get_color();
-    // FragColor = vec4(frag__world_pos.xy,1.0f,1.0f);
-    // float grad = (frag__world_pos.x/0.75*0.5+0.5);
-    // FragColor = get_color() * perlin_interpolate(0,1,grad);
-    vec4 scaled_world_pos = frag__world_pos * 40;
-    ivec4 int_world = ivec4(frag__world_pos);
-    vec4 noised = get_rand_unit_vec(ivec4(frag__world_pos*40));
-    // float val = dot_sample
-    FragColor = get_color() * noised;
-    // FragColor = get_color() * val;
+    
+    vec4 scaled_world_pos = (frag__world_pos*0.5+0.5) * 40;
+    ivec4 int_world_pos = ivec4(scaled_world_pos);
+
+    vec4 noised = get_rand_unit_vec(scaled_world_pos);
+    float val = dot_sample(int_world_pos,scaled_world_pos);
+    // float val = dot_sample(int_world_pos+ivec4(1,1,1,1),scaled_world_pos);
+    // float val = compute_perlin_noise(scaled_world_pos);
+    // FragColor = get_color() * noised;
+    FragColor = get_color() * val;
     FragColor.w = 1.0f;
 }
 
