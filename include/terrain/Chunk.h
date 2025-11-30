@@ -23,6 +23,7 @@ class Chunk {
     utils::WriterBMP writer;                      // File writer for BMP images
 
     Block*** block3D;                             // 3D array of blocks
+    float heightMapData[32][32];                  // Store height values for smooth terrain
 
   public:
     /**
@@ -88,6 +89,14 @@ class Chunk {
     void createLandscape(double dx, double dy);
 
     /**
+     * @brief Create SMOOTH terrain mesh with interpolated vertices
+     *
+     * @param dx Starting x coordinate
+     * @param dy Starting y coordinate
+     */
+    void createSmoothLandscape(double dx, double dy);
+
+    /**
      * @brief Create Waterfall landscape with cliff and water pool
      *
      * @param dx Starting x coordinate
@@ -114,10 +123,17 @@ class Chunk {
 
     /**
      * @brief Create mesh for visible blocks
-     * 
+     *
      * @return std::vector<float> Vertex data
      */
     std::vector<float> render();
+
+    /**
+     * @brief Create smooth terrain mesh using height map data
+     *
+     * @return std::vector<float> Vertex data for smooth terrain
+     */
+    std::vector<float> renderSmooth();
 
     static const int CHUNK_SIZE = 32;
 };

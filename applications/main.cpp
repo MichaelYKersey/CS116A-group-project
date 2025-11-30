@@ -78,15 +78,16 @@ int main()
             std::unique_ptr<Chunk> chunkPtr = std::make_unique<Chunk>();
             chunks[i].push_back(std::move(chunkPtr));
 
-            // Create waterfall in center chunk, normal landscape everywhere else
+            // Create waterfall in center chunk, SMOOTH landscape everywhere else
             if (i == 7 && j == 7) {
                 std::cout << "Creating WATERFALL at chunk (" << i << ", " << j << ")" << std::endl;
                 chunks[i][j]->createWaterfallLandscape(chunks[i][j]->CHUNK_SIZE * (i + 2), chunks[i][j]->CHUNK_SIZE * (j + 2));
+                worldVAO.createVBO(key, chunks[i][j]->render());  // Waterfall uses blocky render
             } else {
-                chunks[i][j]->createLandscape(chunks[i][j]->CHUNK_SIZE * (i + 2), chunks[i][j]->CHUNK_SIZE * (j + 2));
+                std::cout << "Creating SMOOTH TERRAIN at chunk (" << i << ", " << j << ")" << std::endl;
+                chunks[i][j]->createSmoothLandscape(chunks[i][j]->CHUNK_SIZE * (i + 2), chunks[i][j]->CHUNK_SIZE * (j + 2));
+                worldVAO.createVBO(key, chunks[i][j]->renderSmooth());  // Regular terrain uses smooth render
             }
-
-            worldVAO.createVBO(key, chunks[i][j]->render());
         }
     }
 

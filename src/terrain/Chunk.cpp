@@ -1,5 +1,6 @@
 #include <terrain/Chunk.h>
 #include <algorithm>  // For std::max
+#include <iostream>   // For logging
 
 /* -------------------------------------------------------------------------- */
 /*                                  Cube Mesh                                 */
@@ -186,12 +187,17 @@ void Chunk::createCube(std::vector<float> &vertices, Block block, glm::vec3 coor
 }
 
 void Chunk::createLandscape(double dx, double dy) {
+  std::cout << "[TERRAIN] Creating landscape at offset (" << dx << ", " << dy << ")" << std::endl;
+
   // 1. Setup height map
   heightMapBuilder.SetBounds(dx, dx + CHUNK_SIZE - 1, dy, dy + CHUNK_SIZE - 1);
   heightMapBuilder.Build();
   renderer.Render();
 
+  std::cout << "[TERRAIN] Height map built, generating terrain..." << std::endl;
+
   // 2. Loop over chunk horizontal positions
+  int blockCount = 0;
   for (int x = 0; x < CHUNK_SIZE; x++) {
     for (int z = 0; z < CHUNK_SIZE; z++) {
       // 3. Get height
@@ -200,9 +206,45 @@ void Chunk::createLandscape(double dx, double dy) {
       for (int y = 0; y < height; y++) {
         block3D[x][y][z].setActive(true);
         block3D[x][y][z].setTexture(getTextureFromHeight((int)y));
+        blockCount++;
       }
     }
   }
+
+  std::cout << "[TERRAIN] Created " << blockCount << " blocks in landscape" << std::endl;
+}
+
+void Chunk::createSmoothLandscape(double dx, double dy) {
+  std::cout << "[SMOOTH TERRAIN] Creating smooth landscape at offset (" << dx << ", " << dy << ")" << std::endl;
+
+  // 1. Setup and build height map
+  heightMapBuilder.SetBounds(dx, dx + CHUNK_SIZE - 1, dy, dy + CHUNK_SIZE - 1);
+  heightMapBuilder.Build();
+  renderer.Render();
+
+  // 2. Store normalized height values
+  for (int x = 0; x < CHUNK_SIZE; x++) {
+    for (int z = 0; z < CHUNK_SIZE; z++) {
+      float rawHeight = heightMap.GetValue(x, CHUNK_SIZE - 1 - z);
+      // Normalize to 0-CHUNK_SIZE range
+      heightMapData[x][z] = std::min((float)CHUNK_SIZE, ((rawHeight + 1.0f) * (CHUNK_SIZE / 2.0f)));
+      heightMapData[x][z] = std::max(1.0f, heightMapData[x][z]);
+    }
+  }
+
+  // 3. Still create block data for non-terrain features (like waterfall)
+  // But we'll render the smooth surface instead of cubes
+  for (int x = 0; x < CHUNK_SIZE; x++) {
+    for (int z = 0; z < CHUNK_SIZE; z++) {
+      int height = (int)heightMapData[x][z];
+      for (int y = 0; y < height; y++) {
+        block3D[x][y][z].setActive(true);
+        block3D[x][y][z].setTexture(getTextureFromHeight((int)y));
+      }
+    }
+  }
+
+  std::cout << "[SMOOTH TERRAIN] Height map stored for smooth rendering" << std::endl;
 }
 
 void Chunk::clear() {
@@ -252,7 +294,81 @@ std::vector<float> Chunk::render() {
   return vertices;
 }
 
+std::vector<float> Chunk::renderSmooth() {
+  std::cout << "[SMOOTH RENDER] Generating smooth terrain mesh..." << std::endl;
+  std::vector<float> vertices;
+
+  // Create a smooth triangulated surface based on height map
+  for (int x = 0; x < CHUNK_SIZE - 1; x++) {
+    for (int z = 0; z < CHUNK_SIZE - 1; z++) {
+      // Get heights of 4 corners of this quad
+      float h00 = heightMapData[x][z];       // bottom-left
+      float h10 = heightMapData[x+1][z];     // bottom-right
+      float h01 = heightMapData[x][z+1];     // top-left
+      float h11 = heightMapData[x+1][z+1];   // top-right
+
+      // Calculate smooth normal using cross product of edges
+      glm::vec3 v1(1.0f, h10 - h00, 0.0f);  // Edge to right
+      glm::vec3 v2(0.0f, h01 - h00, 1.0f);  // Edge forward
+      glm::vec3 normal = glm::normalize(glm::cross(v2, v1));
+
+      // Convert normal to encoded format (0, 1, 2 for -1, 0, 1)
+      int normX = (int)round(normal.x) + 1;
+      int normY = (int)round(normal.y) + 1;
+      int normZ = (int)round(normal.z) + 1;
+
+      // Get color based on average height
+      float avgHeight = (h00 + h10 + h01 + h11) / 4.0f;
+      BlockTexture texture = getTextureFromHeight((int)avgHeight);
+      int colorID = textureID[texture];
+
+      // Create 2 triangles for this quad
+      // Triangle 1: h00, h10, h01
+      {
+        // Vertex 1: (x, h00, z)
+        int pos1 = x | ((int)h00 << 6) | (z << 12);
+        int encoded1 = pos1 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24;
+        vertices.push_back(encoded1);
+
+        // Vertex 2: (x+1, h10, z)
+        int pos2 = (x+1) | ((int)h10 << 6) | (z << 12);
+        int encoded2 = pos2 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24;
+        vertices.push_back(encoded2);
+
+        // Vertex 3: (x, h01, z+1)
+        int pos3 = x | ((int)h01 << 6) | ((z+1) << 12);
+        int encoded3 = pos3 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24;
+        vertices.push_back(encoded3);
+      }
+
+      // Triangle 2: h10, h11, h01
+      {
+        // Vertex 1: (x+1, h10, z)
+        int pos1 = (x+1) | ((int)h10 << 6) | (z << 12);
+        int encoded1 = pos1 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24;
+        vertices.push_back(encoded1);
+
+        // Vertex 2: (x+1, h11, z+1)
+        int pos2 = (x+1) | ((int)h11 << 6) | ((z+1) << 12);
+        int encoded2 = pos2 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24;
+        vertices.push_back(encoded2);
+
+        // Vertex 3: (x, h01, z+1)
+        int pos3 = x | ((int)h01 << 6) | ((z+1) << 12);
+        int encoded3 = pos3 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24;
+        vertices.push_back(encoded3);
+      }
+    }
+  }
+
+  std::cout << "[SMOOTH RENDER] Generated " << vertices.size() << " vertices for smooth terrain" << std::endl;
+  return vertices;
+}
+
 void Chunk::createWaterfallLandscape(double dx, double dy) {
+    std::cout << "[WATERFALL] ========================================" << std::endl;
+    std::cout << "[WATERFALL] Creating waterfall landscape..." << std::endl;
+
     // Create a TALL MOUNTAIN with waterfall!
     // Clear everything first
     for (int x = 0; x < CHUNK_SIZE; x++) {
@@ -262,8 +378,10 @@ void Chunk::createWaterfallLandscape(double dx, double dy) {
             }
         }
     }
+    std::cout << "[WATERFALL] Cleared chunk" << std::endl;
 
     // Build TALL MOUNTAIN - stone pyramid
+    int mountainBlocks = 0;
     for (int x = 0; x < CHUNK_SIZE; x++) {
         for (int z = 0; z < CHUNK_SIZE; z++) {
             // Height based on distance from center (pyramid shape)
@@ -280,22 +398,28 @@ void Chunk::createWaterfallLandscape(double dx, double dy) {
             for (int y = 0; y < height; y++) {
                 block3D[x][y][z].setActive(true);
                 block3D[x][y][z].setTexture(BlockTexture::STONE);
+                mountainBlocks++;
             }
         }
     }
+    std::cout << "[WATERFALL] Built mountain with " << mountainBlocks << " stone blocks" << std::endl;
 
     // Create WATER LAKE at the top center of mountain
+    int lakeBlocks = 0;
     for (int x = 10; x < 22; x++) {
         for (int z = 10; z < 22; z++) {
             // Add 3 layers of water at mountain top
             for (int y = 22; y < 26; y++) {
                 block3D[x][y][z].setActive(true);
                 block3D[x][y][z].setTexture(BlockTexture::WATER);
+                lakeBlocks++;
             }
         }
     }
+    std::cout << "[WATERFALL] Created lake with " << lakeBlocks << " water blocks at top" << std::endl;
 
     // CARVE WATERFALL PATH - vertical channel down one side
+    std::cout << "[WATERFALL] Carving waterfall channel (x=10-12, z=14-17, y=0-23)" << std::endl;
     for (int z = 14; z < 18; z++) {
         for (int y = 0; y < 24; y++) {
             // Remove blocks to create waterfall channel
@@ -306,22 +430,30 @@ void Chunk::createWaterfallLandscape(double dx, double dy) {
     }
 
     // Add FALLING WATER in the channel - FILL ENTIRE CHANNEL WIDTH!
+    int fallingWaterBlocks = 0;
     for (int x = 10; x <= 12; x++) {  // Fill all 3 columns of the carved channel
         for (int z = 14; z < 18; z++) {
             for (int y = 3; y < 24; y++) {  // Every block for continuous waterfall
                 block3D[x][y][z].setActive(true);
                 block3D[x][y][z].setTexture(BlockTexture::WATER);
+                fallingWaterBlocks++;
             }
         }
     }
+    std::cout << "[WATERFALL] Added " << fallingWaterBlocks << " falling water blocks" << std::endl;
 
     // Create POOL at bottom where water lands
+    int poolBlocks = 0;
     for (int x = 6; x < 14; x++) {
         for (int z = 12; z < 20; z++) {
             for (int y = 0; y < 4; y++) {
                 block3D[x][y][z].setActive(true);
                 block3D[x][y][z].setTexture(BlockTexture::WATER);
+                poolBlocks++;
             }
         }
     }
+    std::cout << "[WATERFALL] Created pool with " << poolBlocks << " water blocks at bottom" << std::endl;
+    std::cout << "[WATERFALL] Waterfall complete! Total water: " << (lakeBlocks + fallingWaterBlocks + poolBlocks) << std::endl;
+    std::cout << "[WATERFALL] ========================================" << std::endl;
 }
