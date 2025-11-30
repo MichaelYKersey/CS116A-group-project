@@ -1,79 +1,9 @@
 #include <terrain/Chunk.h>
+#include <terrain/BlockRegistry.h>
+#include <general/GeometryUtils.h>
+#include <general/Config.h>
 #include <algorithm>  // For std::max
 #include <iostream>   // For logging
-
-/* -------------------------------------------------------------------------- */
-/*                                  Cube Mesh                                 */
-/* -------------------------------------------------------------------------- */
-
-// pos.x, pos.y, pos.z, normal.x, normal.y, normal.z
-std::vector<float> cube = {
-  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-   0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-   0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-   0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-  -0.5f,  0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, 0.0f, -1.0f,
-
-  -0.5f, -0.5f,  0.5f, 0.0f, 0.0f,  1.0f,
-   0.5f, -0.5f,  0.5f, 0.0f, 0.0f,  1.0f,
-   0.5f,  0.5f,  0.5f, 0.0f, 0.0f,  1.0f,
-   0.5f,  0.5f,  0.5f, 0.0f, 0.0f,  1.0f,
-  -0.5f,  0.5f,  0.5f, 0.0f, 0.0f,  1.0f,
-  -0.5f, -0.5f,  0.5f, 0.0f, 0.0f,  1.0f,
-
-  -0.5f,  0.5f,  0.5f, -1.0f, 0.0f, 0.0f,
-  -0.5f,  0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
-  -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
-  -0.5f, -0.5f, -0.5f, -1.0f, 0.0f, 0.0f,
-  -0.5f, -0.5f,  0.5f, -1.0f, 0.0f, 0.0f,
-  -0.5f,  0.5f,  0.5f, -1.0f, 0.0f, 0.0f,
-
-   0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-   0.5f,  0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-   0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-   0.5f, -0.5f, -0.5f,  1.0f, 0.0f, 0.0f,
-   0.5f, -0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-   0.5f,  0.5f,  0.5f,  1.0f, 0.0f, 0.0f,
-
-  -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
-   0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
-   0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f,
-   0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f,
-  -0.5f, -0.5f,  0.5f, 0.0f, -1.0f, 0.0f,
-  -0.5f, -0.5f, -0.5f, 0.0f, -1.0f, 0.0f,
-
-  -0.5f,  0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
-   0.5f,  0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
-   0.5f,  0.5f,  0.5f, 0.0f,  1.0f, 0.0f,
-   0.5f,  0.5f,  0.5f, 0.0f,  1.0f, 0.0f,
-  -0.5f,  0.5f,  0.5f, 0.0f,  1.0f, 0.0f,
-  -0.5f,  0.5f, -0.5f, 0.0f,  1.0f, 0.0f,
-};
-
-/* -------------------------------------------------------------------------- */
-/*                                Block Mapping                               */
-/* -------------------------------------------------------------------------- */
-
-std::map<BlockTexture, glm::vec3> textureMap = {
-  {BlockTexture::DEFAULT,        glm::vec3(0.04f,   0.44f,   0.15f)},
-  {BlockTexture::GRASS,          glm::vec3(0.04f,   0.44f,   0.15f)},
-  {BlockTexture::SAND,           glm::vec3(0.761f,  0.698f,  0.502f)},
-  {BlockTexture::STONE,          glm::vec3(0.5725f, 0.5569f, 0.5216f)},
-  {BlockTexture::ICE,            glm::vec3(0.2549f, 0.9608f, 0.9647f)},
-  {BlockTexture::SNOW,           glm::vec3(1.0f,    1.0f,    1.0f)},
-  {BlockTexture::WATER,          glm::vec3(0.2f,    0.5f,    0.9f)},     // Dark blue water
-  {BlockTexture::WATER_PARTICLE, glm::vec3(0.4f,    0.85f,   1.0f)},    // Light cyan particles!
-};
-
-std::map<BlockTexture, int> textureID = {
-  {BlockTexture::SAND,           0},
-  {BlockTexture::GRASS,          1},
-  {BlockTexture::STONE,          2},
-  {BlockTexture::SNOW,           2},  // Snow and stone both gray - that's OK
-  {BlockTexture::WATER,          3},  // Dark blue water (static blocks)
-  {BlockTexture::WATER_PARTICLE, 4},  // Light cyan particles (fluid physics!)
-};
 
 Chunk::Chunk() {
   block3D = new Block **[CHUNK_SIZE];
@@ -165,22 +95,26 @@ void Chunk::createCube() {
 }
 
 void Chunk::createCube(std::vector<float> &vertices, Block block, glm::vec3 coordinate) {
-  // 1. Loop through cube mesh
-  for (int i = 0; i < cube.size(); i += 6) {
+  // Use centralized geometry from GeometryUtils
+  const auto& cubeMesh = Geometry::CUBE_MESH;
+  auto& registry = BlockRegistry::getInstance();
+
+  // Loop through cube mesh
+  for (int i = 0; i < cubeMesh.size(); i += 6) {
     // Get vertex pos in chunk coords
-    int x = (cube[i] + 0.5 + coordinate.x);
-    int y = (cube[i + 1] + 0.5 + coordinate.y);
-    int z = (cube[i + 2] + 0.5 + coordinate.z);
+    int x = (cubeMesh[i] + 0.5 + coordinate.x);
+    int y = (cubeMesh[i + 1] + 0.5 + coordinate.y);
+    int z = (cubeMesh[i + 2] + 0.5 + coordinate.z);
 
     // Get normal
-    int normX = (cube[i + 3] == -1.0 ? 2 : cube[i + 3]);
-    int normY = (cube[i + 4] == -1.0 ? 2 : cube[i + 4]);
-    int normZ = (cube[i + 5] == -1.0 ? 2 : cube[i + 5]);
+    int normX = (cubeMesh[i + 3] == -1.0 ? 2 : cubeMesh[i + 3]);
+    int normY = (cubeMesh[i + 4] == -1.0 ? 2 : cubeMesh[i + 4]);
+    int normZ = (cubeMesh[i + 5] == -1.0 ? 2 : cubeMesh[i + 5]);
 
-    // Bit encoding
+    // Bit encoding - use BlockRegistry for color ID
     int position = x | y << 6 | z << 12;
     int normal = normX | normY << 2 | normZ << 4;
-    int color = textureID[block.getTexture()];
+    int color = registry.getColorID(block.getTexture());
 
     int vertex = position | normal << 18 | color << 24;
 
@@ -322,10 +256,10 @@ std::vector<float> Chunk::renderSmooth() {
       int normY = (int)round(normal.y) + 1;
       int normZ = (int)round(normal.z) + 1;
 
-      // Get color based on average height
+      // Get color based on average height using BlockRegistry
       float avgHeight = (h00 + h10 + h01 + h11) / 4.0f;
       BlockTexture texture = getTextureFromHeight((int)avgHeight);
-      int colorID = textureID[texture];
+      int colorID = BlockRegistry::getInstance().getColorID(texture);
 
       // Create 2 triangles for this quad
       // Triangle 1: h00, h10, h01

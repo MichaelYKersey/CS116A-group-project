@@ -1,11 +1,12 @@
 #include <general/VolumetricFog.h>
+#include <general/Config.h>
 
 VolumetricFog::VolumetricFog() {
-    // Default atmospheric fog settings - light blue mist
-    fogColor = glm::vec3(0.7f, 0.8f, 0.9f);  // Light blue-gray
-    fogDensity = 0.02f;                       // Moderate thickness
-    fogStart = 50.0f;                         // Begin at 50 units
-    fogEnd = 250.0f;                          // Full fog at 250 units
+    // Initialize from Config
+    fogColor = Config::Fog::COLOR;
+    fogDensity = Config::Fog::DENSITY;
+    fogStart = Config::Fog::START_DISTANCE;
+    fogEnd = Config::Fog::END_DISTANCE;
 }
 
 VolumetricFog::VolumetricFog(glm::vec3 color, float density, float start, float end)

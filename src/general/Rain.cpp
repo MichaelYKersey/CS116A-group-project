@@ -1,18 +1,19 @@
 #include <general/Rain.h>
+#include <general/Config.h>
 #include <terrain/Chunk.h>
 #include <iostream>
 
 Rain::Rain(int worldSize)
     : worldSize(worldSize), spawnTimer(0.0f), randomGen(std::random_device{}()) {
 
-    // Initialize rain parameters
-    spawnHeight = 80.0f;      // Spawn high in the sky (world units)
-    spawnRate = 500.0f;       // 500 raindrops per second for heavy rain
-    fallSpeed = 30.0f;        // Base falling speed (units/sec)
-    groundLevel = 5.0f;       // Despawn near ground level
+    // Initialize rain parameters from Config
+    spawnHeight = Config::Rain::SPAWN_HEIGHT;
+    spawnRate = Config::Rain::SPAWN_RATE;
+    fallSpeed = Config::Rain::FALL_SPEED;
+    groundLevel = Config::Rain::GROUND_LEVEL;
 
-    // Pre-allocate particle pool (5000 raindrops max)
-    rainDrops.resize(5000);
+    // Pre-allocate particle pool from Config
+    rainDrops.resize(Config::Rain::PARTICLE_POOL_SIZE);
 
     std::cout << "[RAIN] Rain system initialized with " << rainDrops.size()
               << " particle pool" << std::endl;
@@ -65,7 +66,7 @@ void Rain::spawnRainDrops(float dt) {
 }
 
 void Rain::updateParticles(float dt) {
-    const float gravity = -9.8f;  // Gravity acceleration
+    const float gravity = Config::Physics::GRAVITY;  // Use centralized physics constant
 
     for (auto& drop : rainDrops) {
         if (!drop.active) continue;

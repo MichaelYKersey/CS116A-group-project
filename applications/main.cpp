@@ -18,6 +18,7 @@
 #include <general/CameraWrapper.h>
 #include <general/VolumetricFog.h>
 #include <general/Rain.h>
+#include <general/Config.h>
 #include <terrain/Chunk.h>
 #include <terrain/Waterfall.h>
 #include <general/app_util.hpp>
@@ -29,32 +30,31 @@ void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
 void processInput(GLFWwindow *window);
 void renderWorld(VertexArrayWrapper &worldVAO, Shader worldShader, Renderer renderer, glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection, glm::vec4 plane);
 
-// settings
-const int WORLD_SIZE          = 16;
+// Use Config for all settings
+const int WORLD_SIZE = Config::World::SIZE;
 
 // camera
 glm::vec3 cameraPos   = glm::vec3(0.0f, 0.0f, 3.0f);
 glm::vec3 cameraFront = glm::vec3(0.0f, 0.0f, -1.0f);
-glm::vec3 cameraUp    = glm::vec3(0.0f, 1.0f, 0.0f);
+glm::vec3 cameraUp    = Config::Camera::UP_VECTOR;
 
 bool firstMouse = true;
-float yaw   = -90.0f;	// yaw is initialized to -90.0 degrees since a yaw of 0.0 results in a direction vector pointing to the right so we initially rotate a bit to the left.
+float yaw   = -90.0f;
 float pitch =  0.0f;
-float lastX =  800.0f / 2.0;
-float lastY =  600.0 / 2.0;
-float fov   =  45.0f;
+float lastX =  Config::Rendering::WINDOW_WIDTH / 2.0;
+float lastY =  Config::Rendering::WINDOW_HEIGHT / 2.0;
+float fov   =  Config::Rendering::FOV;
 
-// Create Camera - Start at waterfall with nice viewing angle
-// Waterfall is at chunk (7,7) = position (140, 0, -140)
-Camera camera(glm::vec3(90.0f, 40.0f, -90.0f), cameraUp, -135.0f, -20.0f);
+// Create Camera from Config
+Camera camera(Config::Camera::START_POSITION, cameraUp, Config::Camera::START_YAW, Config::Camera::START_PITCH);
 
 // timing
-float deltaTime = 0.0f;	// time between current frame and last frame
+float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
-// Light (Sun position - high in the sky!)
-glm::vec3 lightPos(160.0f, 150.0f, -160.0f);  // High above waterfall, like a sun
-glm::vec3 lightColor(1.0f, 0.95f, 0.8f);      // Warm sunlight color
+// Light from Config
+glm::vec3 lightPos = Config::Lighting::SUN_POSITION;
+glm::vec3 lightColor = Config::Lighting::SUN_COLOR;
 
 int main()
 {
@@ -62,8 +62,8 @@ int main()
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
     
-    Shader worldShader("./shaders/WorldShader.GLSL");
-    Shader lightShader("./shaders/LightsShader.GLSL");
+    Shader worldShader(Config::Shaders::WORLD_SHADER);
+    Shader lightShader(Config::Shaders::LIGHT_SHADER);
     lightShader.use();
 
     // Init Renderer
@@ -87,8 +87,8 @@ int main()
         for (int j = 0; j < WORLD_SIZE; j++) {
             std::string key = "Chunk" + std::to_string(i) +","+ std::to_string(j);
 
-            // Create waterfall in center chunk, SMOOTH landscape everywhere else
-            if (i == 7 && j == 7) {
+            // Create waterfall at configured position
+            if (i == Config::World::WATERFALL_CHUNK_X && j == Config::World::WATERFALL_CHUNK_Z) {
                 std::cout << "Creating WATERFALL at chunk (" << i << ", " << j << ")" << std::endl;
                 waterfall = std::make_unique<Waterfall>();
                 waterfall->create(Waterfall::CHUNK_SIZE * (i + 2), Waterfall::CHUNK_SIZE * (j + 2));
@@ -109,7 +109,7 @@ int main()
     // Create WATER PLANE underneath terrain to fill gaps - DARK BLUE water visible through cracks
     std::cout << "Creating water plane underneath terrain..." << std::endl;
     std::vector<float> waterPlane;
-    int waterY = 8;  // Y position in chunk coordinates - closer to surface (sand level ~y=10)
+    int waterY = Config::World::WATER_PLANE_Y;  // From Config
 
     // Create single chunk-sized water plane (will be rendered at each chunk position)
     for (int x = 0; x < 32; x++) {
@@ -226,14 +226,16 @@ int main()
         // FREE CAMERA - Use keyboard/mouse controls to navigate!
         // WASD: Move, Mouse: Look around, Scroll: Zoom
         glm::mat4 view = camera.getViewMatrix();
-        glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), 800.0f / 600.0f, 0.1f, 1000.0f);
+        float aspect = (float)Config::Rendering::WINDOW_WIDTH / Config::Rendering::WINDOW_HEIGHT;
+        glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), aspect,
+                                                Config::Rendering::NEAR_PLANE, Config::Rendering::FAR_PLANE);
         
         // Render SUN - big glowing sphere in the sky!
         lightShader.use();
         lightVAO.bind();
         model = glm::mat4(1.0f);
         model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(15.0f));  // BIG sun!
+        model = glm::scale(model, glm::vec3(Config::Lighting::SUN_SCALE));  // From Config
         lightShader.setMat4("model", model);
         lightShader.setMat4("view", view);
         lightShader.setMat4("projection", projection);
