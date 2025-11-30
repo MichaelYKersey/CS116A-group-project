@@ -59,8 +59,6 @@ int main()
     glfwSetScrollCallback(window, scroll_callback);
     
     Shader worldShader("./shaders/WorldShader.GLSL");
-    Shader lightShader("./shaders/LightsShader.GLSL");
-    lightShader.use();
 
     // Init Renderer
     Renderer renderer;
@@ -83,55 +81,6 @@ int main()
     }
 
     std::cout << "iterated through chunks" << std::endl;
-    
-    // Setup lights
-    std::vector<float> lights = {
-        // positions          
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f, 
-         0.5f,  0.5f, -0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f, 
-
-        -0.5f, -0.5f, 0.5f,
-         0.5f, -0.5f, 0.5f,
-         0.5f,  0.5f, 0.5f, 
-         0.5f,  0.5f, 0.5f,
-        -0.5f,  0.5f, 0.5f,
-        -0.5f, -0.5f, 0.5f, 
-
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f, 
-        -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f, 
-
-        0.5f,  0.5f,  0.5f,
-        0.5f,  0.5f, -0.5f,
-        0.5f, -0.5f, -0.5f, 
-        0.5f, -0.5f, -0.5f,
-        0.5f, -0.5f,  0.5f,
-        0.5f,  0.5f,  0.5f, 
-
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f,  0.5f, 
-         0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f, -0.5f, 
-
-        -0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f,  0.5f, 
-         0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f, 
-    };
-    VertexArrayWrapper lightVAO(Vertex_Default);
-    lightVAO.createVBO("Light", lights);
-    lightVAO.bindVBO("Light");
 
     // render loop
     // -----------
@@ -160,17 +109,6 @@ int main()
         glm::mat4 view = camera.getViewMatrix();
         glm::mat4 projection = glm::mat4(1.0f);
         projection = glm::perspective(glm::radians(camera.zoom), 800.0f / 600.0f, 0.1f, 200.0f);
-        
-        // Render Lights
-        lightShader.use();
-        lightVAO.bind();
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(0.2f));
-        lightShader.setMat4("model", model);
-        lightShader.setMat4("view", view);
-        lightShader.setMat4("projection", projection);
-        lightVAO.bindVBO("Light");
-        renderer.draw(lightVAO, lightShader);
 
         // Generate World
         glDisable(GL_CLIP_DISTANCE0);
