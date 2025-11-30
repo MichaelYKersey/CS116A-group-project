@@ -13,8 +13,9 @@ build_application(
     ./src/noise/noiseutils.cpp
     
     # comment out all applications besides the one you want to run
-    ./applications/main.cpp
+    #./applications/main.cpp
     #./applications/learnopengl_camera_demo.cpp
+    ./applications/water_texture.cpp
 
     PACKAGES
     glfw3
