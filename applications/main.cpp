@@ -98,6 +98,40 @@ int main()
 
     std::cout << "iterated through chunks" << std::endl;
 
+    // Create WATER PLANE underneath terrain to fill gaps - DARK BLUE water visible through cracks
+    std::cout << "Creating water plane underneath terrain..." << std::endl;
+    std::vector<float> waterPlane;
+    int waterY = 8;  // Y position in chunk coordinates - closer to surface (sand level ~y=10)
+
+    // Create single chunk-sized water plane (will be rendered at each chunk position)
+    for (int x = 0; x < 32; x++) {
+        for (int z = 0; z < 32; z++) {
+            // Normal pointing up
+            int normX = 1, normY = 2, normZ = 1;  // (0, 1, 0) up
+            int colorID = 3;  // DARK BLUE water color
+
+            // Triangle 1
+            int pos1 = x | (waterY << 6) | (z << 12);
+            waterPlane.push_back(pos1 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24);
+
+            int pos2 = (x+1) | (waterY << 6) | (z << 12);
+            waterPlane.push_back(pos2 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24);
+
+            int pos3 = x | (waterY << 6) | ((z+1) << 12);
+            waterPlane.push_back(pos3 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24);
+
+            // Triangle 2
+            waterPlane.push_back(pos2 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24);
+
+            int pos4 = (x+1) | (waterY << 6) | ((z+1) << 12);
+            waterPlane.push_back(pos4 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24);
+
+            waterPlane.push_back(pos3 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24);
+        }
+    }
+    worldVAO.createVBO("WaterPlane", waterPlane);
+    std::cout << "Water plane created with " << waterPlane.size() << " vertices at y=" << waterY << std::endl;
+
     // Setup lights
     std::vector<float> lights = {
         // positions          
@@ -260,6 +294,19 @@ void renderWorld(VertexArrayWrapper &worldVAO, Shader worldShader, Renderer rend
             model = glm::scale(model, glm::vec3(20, 20, 20));
             worldShader.setMat4("model", model);
 
+            renderer.draw(worldVAO, worldShader);
+        }
+    }
+
+    // Draw WATER PLANE underneath terrain - dark blue water visible through gaps
+    // Render at each chunk position like terrain
+    worldVAO.bindVBO("WaterPlane");
+    for (int i = 0; i < WORLD_SIZE; ++i) {
+        for (int j = 0; j < WORLD_SIZE; ++j) {
+            model = glm::mat4(1.0f);
+            model = glm::translate(model, glm::vec3(i * 20, 0.0f, -j * 20));
+            model = glm::scale(model, glm::vec3(20, 20, 20));
+            worldShader.setMat4("model", model);
             renderer.draw(worldVAO, worldShader);
         }
     }
