@@ -19,7 +19,14 @@ VertexArrayWrapper::VertexArrayWrapper(VertexType vt) {
 }
 
 VertexArrayWrapper::~VertexArrayWrapper() {
-  // Empty Destructor
+  // Clean up all VBOs to prevent GPU memory leak
+  for (auto& pair : VBOs) {
+    glDeleteBuffers(1, &pair.second);
+  }
+  VBOs.clear();
+
+  // Clean up VAO
+  glDeleteVertexArrays(1, &vArray);
 }
 
 void VertexArrayWrapper::bind() const {
@@ -61,6 +68,14 @@ int VertexArrayWrapper::getVertexSizeBytes() const {
 }
 
 void VertexArrayWrapper::createVBO(std::string key, std::vector<float> vertices) {
+  // Check if VBO already exists - if so, update it instead of creating new one
+  auto it = VBOs.find(key);
+  if (it != VBOs.end()) {
+    // VBO exists - use editVBO instead to avoid memory leak
+    editVBO(key, vertices);
+    return;
+  }
+
   // 1. Create Buffer object
   unsigned int VBO;
   glGenBuffers(1, &VBO);
