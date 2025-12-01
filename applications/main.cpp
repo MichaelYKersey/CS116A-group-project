@@ -301,6 +301,10 @@ void processInput(GLFWwindow *window)
         camera.processKeyboard(CamMovement::LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.processKeyboard(CamMovement::RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS)
+        camera.processKeyboard(CamMovement::UP, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
+        camera.processKeyboard(CamMovement::DOWN, deltaTime);
 }
 
 // glfw: whenever the mouse moves, this callback is called

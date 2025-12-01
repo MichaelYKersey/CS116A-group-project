@@ -51,19 +51,28 @@ void Camera::updateCameraVectors() {
 }
 
 void Camera::processKeyboard(CamMovement dir, float deltaTime) {
+  glm::vec3 flat_front = this->front;
+  flat_front.y = 0;
+  flat_front = glm::normalize(flat_front);
   float velocity = this->movementSpeed * deltaTime;
   switch(dir) {
     case FORWARD:
-      this->position += this->front * velocity;
+      this->position += flat_front * velocity;
       break;
     case BACKWARD:
-      this->position -= this->front * velocity;
+      this->position -= flat_front * velocity;
       break;
     case LEFT:
       this->position -= this->right * velocity;
       break;
     case RIGHT:
       this->position += this->right * velocity;
+      break;
+    case UP:
+      this->position.y += velocity;
+      break;
+    case DOWN:
+      this->position.y -= velocity;
       break;
   }
 }
