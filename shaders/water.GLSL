@@ -1,17 +1,19 @@
 #Shader Vertex
 #version 330 core
 layout (location = 0) in vec3 vertex_world_pos;
-out vec4 frag__world_pos;
+out vec4 perlin_pos;
+uniform float perlin_progress;
+uniform vec3 perlin_offset;
 void main()
 {
-    frag__world_pos = vec4(vertex_world_pos,1.0f);
+    perlin_pos = vec4(vertex_world_pos+perlin_offset, perlin_progress);
     gl_Position = vec4(vertex_world_pos, 1.0);
 }
 
 #Shader Fragment
 #version 330 core
 out vec4 FragColor;
-in vec4 frag__world_pos;
+in vec4 perlin_pos;
 
 // hash ripped form internet (https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl)
 // A single iteration of Bob Jenkins' One-At-A-Time hashing algorithm.
@@ -188,23 +190,29 @@ float compute_perlin_noise(vec4 perlin_pos)
     return s;
 }
 
-vec4 get_color()
+vec4 get_color(float val)
 {
-    return vec4(1.0f,1.0f,1.0f, 1.0f); 
+    //color technique from here: https://www.reddit.com/r/gamedev/comments/1kd36md/tiny_tip_on_how_to_quickly_use_perlin_noise_to/
+    if (val < 0.55 && 0.52 < val) {
+        return vec4(1.0f,1.0f,1.0f,1.0f);
+    } else {
+        return vec4(0.0f,0.0f,0.8,1.0f);
+    }
+    // return vec4(1.0f,1.0f,1.0f,1.0f); 
 }
 
 void main()
 {
-    vec4 scaled_world_pos = (frag__world_pos*0.5+0.5) * 40;
+    vec4 scaled_world_pos = (perlin_pos*0.5+0.5) * 40;
     ivec4 int_world_pos = ivec4(scaled_world_pos);
 
     // vec4 noised = get_rand_unit_vec4(scaled_world_pos);
     // FragColor = get_color() * noised;
     // float val = dot_sample(int_world_pos,scaled_world_pos);
     // float val = dot_sample(int_world_pos+ivec4(1,1,1,1),scaled_world_pos);
-    float val = compute_perlin_noise_2d(scaled_world_pos.xy);
+    float val = compute_perlin_noise(scaled_world_pos);
     val = val *0.5+0.5;
-    FragColor = get_color() * val;
+    FragColor = get_color(val);
     FragColor.w = 1.0f;
 }
 

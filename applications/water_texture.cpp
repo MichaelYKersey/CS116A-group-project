@@ -97,6 +97,9 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         ourShader.use();
+        float time = glfwGetTime()/100.0f;
+        ourShader.setFloat("perlin_progress", time);
+        ourShader.setVec3("perlin_offset",glm::vec3(time*10,time,0));
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
