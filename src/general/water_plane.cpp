@@ -48,6 +48,7 @@ void water_plane::render()
     m_shader.setMat4("view", m_view);
     m_shader.setMat4("projection", m_projection);
     m_shader.setVec3("perlin_offset",glm::vec3(time*10,-time,time));
+    m_shader.setFloat("perlin_scale", 6);
     glBindVertexArray(VAO);
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 }

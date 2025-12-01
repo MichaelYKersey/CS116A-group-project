@@ -22,6 +22,7 @@ void main()
 #version 330 core
 out vec4 FragColor;
 in vec4 perlin_pos;
+uniform float perlin_scale;
 
 // VOLUMETRIC FOG PARAMETERS
 uniform vec3 fogColor;      // Color of fog (light blue/gray)
@@ -213,7 +214,7 @@ vec4 get_color(float val)
     } else {
         return vec4(0.0f,0.0f,0.8,1.0f);
     }
-    // return vec4(1.0f,1.0f,1.0f,1.0f); 
+    // return vec4(1.0f,1.0f,1.0f,1.0f) * val; 
 }
 
 float compute_perlin_noise_4d_layerd(vec4 perlin_pos, int layers)
@@ -229,7 +230,7 @@ float compute_perlin_noise_4d_layerd(vec4 perlin_pos, int layers)
 }
 void main()
 {
-    vec4 scaled_world_pos = (perlin_pos*0.5+0.5) / 3;
+    vec4 scaled_world_pos = perlin_pos / perlin_scale;
     ivec4 int_world_pos = ivec4(scaled_world_pos);
 
     float val = compute_perlin_noise_4d_layerd(scaled_world_pos,3);
