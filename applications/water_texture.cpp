@@ -99,6 +99,9 @@ int main()
         ourShader.use();
         float time = glfwGetTime()/100.0f;
         ourShader.setFloat("perlin_progress", time);
+        ourShader.setMat4("model", glm::mat4(1));
+        ourShader.setMat4("view", glm::mat4(1));
+        ourShader.setMat4("projection", glm::mat4(1));
         ourShader.setVec3("perlin_offset",glm::vec3(time*10,time,0));
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);

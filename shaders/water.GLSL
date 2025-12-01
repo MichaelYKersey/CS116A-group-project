@@ -1,13 +1,17 @@
 #Shader Vertex
 #version 330 core
-layout (location = 0) in vec3 vertex_world_pos;
+layout (location = 0) in vec3 vertex_model_pos;
 out vec4 perlin_pos;
 uniform float perlin_progress;
 uniform vec3 perlin_offset;
+uniform mat4 model;
+uniform mat4 view;
+uniform mat4 projection;
 void main()
 {
-    perlin_pos = vec4(vertex_world_pos+perlin_offset, perlin_progress);
-    gl_Position = vec4(vertex_world_pos, 1.0);
+    //perlin noise is reltive to model orgin
+    perlin_pos = vec4(vertex_model_pos+perlin_offset, perlin_progress);
+    gl_Position = projection * view * model * vec4(vertex_model_pos, 1.0);
 }
 
 #Shader Fragment
