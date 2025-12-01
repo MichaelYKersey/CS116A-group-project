@@ -1,3 +1,4 @@
+#include "general/VolumetricFog.h"
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -83,6 +84,8 @@ int main()
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
+    VolumetricFog fog;
+
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -97,12 +100,15 @@ int main()
         glClear(GL_COLOR_BUFFER_BIT);
 
         ourShader.use();
+        fog.applyToShader(ourShader);
+        ourShader.setVec3("viewPos",glm::vec3(0,0,0));
         float time = glfwGetTime()/100.0f;
         ourShader.setFloat("perlin_progress", time);
         ourShader.setMat4("model", glm::mat4(1));
         ourShader.setMat4("view", glm::mat4(1));
         ourShader.setMat4("projection", glm::mat4(1));
-        ourShader.setVec3("perlin_offset",glm::vec3(time*10,time,0));
+        ourShader.setVec3("perlin_offset",glm::vec3(1,1,1) + glm::vec3(time*10,time,0));
+        ourShader.setFloat("perlin_scale", 0.5);
         glBindVertexArray(VAO);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
