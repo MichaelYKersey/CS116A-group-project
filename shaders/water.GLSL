@@ -24,9 +24,9 @@ uint hash( uint x ) {
     return x;
 }
 // Compound versions of the hashing algorithm I whipped together.
-uint hash( uvec2 v ) { return hash( v.x ^ hash(v.y)                         ); }
-uint hash( uvec3 v ) { return hash( v.x ^ hash(v.y) ^ hash(v.z)             ); }
-uint hash( uvec4 v ) { return hash( v.x ^ hash(v.y) ^ hash(v.z) ^ hash(v.w) ); }
+uint hash( uvec2 v ) { return hash( hash(v.x) ^ v.y); }
+uint hash( uvec3 v ) { return hash( hash(v.xy) ^ v.z); }
+uint hash( uvec4 v ) { return hash( hash(v.xyz) ^ v.w); }
 // Construct a float with half-open range [0:1] using low 23 bits.
 // All zeroes yields 0.0, all ones yields the next smallest representable value below 1.0.
 float floatConstruct( uint m ) {
@@ -47,7 +47,7 @@ float random( vec4  v ) { return floatConstruct(hash(floatBitsToUint(v))); }
 //end of RNG generator code copied
 
 //3d + time is 4 dimessions
-vec4 get_rand_unit_vec(vec4 in_vec)
+vec4 get_rand_unit_vec4(vec4 in_vec)
 {
     //gen rand values then normalize (it's not uniform but oh well)
     vec4 rand_vec = vec4 (
@@ -60,12 +60,19 @@ vec4 get_rand_unit_vec(vec4 in_vec)
     rand_vec = rand_vec*2.0f-1.0f;
     return normalize(rand_vec);
 }
+vec2 get_rand_unit_vec2(vec2 p)
+{
+    vec4 norm_vec = get_rand_unit_vec4(vec4(p,0.0f,0.0f));
+    return normalize(norm_vec.xy);
+}
 
 //dot product of rand vector at gradient sample and perlin smaple position 
-float dot_sample(vec4 rand_val_pos, vec4 perlin_pos)
+float dot_sample(vec4 gradient_position, vec4 perlin_pos)
 {
-    vec4 rand_vec = get_rand_unit_vec(rand_val_pos);
-    vec4 diff_vec = perlin_pos - rand_val_pos;
+    vec4 rand_vec = get_rand_unit_vec4(gradient_position);
+    // float a = random(gradient_position.xy) * 6.28318530718; // 2*pi
+    // vec4 rand_vec = vec4(cos(a), sin(a),0.0f,0.0f);
+    vec4 diff_vec = perlin_pos - gradient_position;
     return dot(rand_vec,diff_vec);
 }
 // interpolating a to b using 6t^4 - 15t^5 + 10t^6
@@ -80,6 +87,28 @@ float perlin_interpolate(float a, float b, float t)
     // overall_t += 10.0f * pt;
     float overall_t = t*t*t;
     return (a * (1-overall_t)) + (b * overall_t);
+}
+float compute_perlin_noise_2d(vec2 perlin_pos_2d)
+{
+    vec4 perlin_pos = vec4(perlin_pos_2d.xy,0.0f,0.0f);
+    vec4 ppi0 = floor(perlin_pos);
+    vec4 ppi1 = ppi0 + vec4(1,1,0,0);
+    vec4 fract_pos = fract(perlin_pos);
+    
+    vec4 v00 = vec4(ppi0.x,ppi0.y,0.0f,0.0f);
+    vec4 v01 = vec4(ppi0.x,ppi1.y,0.0f,0.0f);
+    vec4 v10 = vec4(ppi1.x,ppi0.y,0.0f,0.0f);
+    vec4 v11 = vec4(ppi1.x,ppi1.y,0.0f,0.0f);
+
+    float s00 = dot_sample(v00,perlin_pos);
+    float s01 = dot_sample(v01,perlin_pos);
+    float s10 = dot_sample(v10,perlin_pos);
+    float s11 = dot_sample(v11,perlin_pos);
+
+    float i0 = perlin_interpolate(s00,s01,fract_pos.y);
+    float i1 = perlin_interpolate(s10,s11,fract_pos.y);
+    float i = perlin_interpolate(i0,i1,fract_pos.x);
+    return i;
 }
 
 float compute_perlin_noise(vec4 perlin_pos)
@@ -165,16 +194,16 @@ vec4 get_color()
 
 void main()
 {
-    
     vec4 scaled_world_pos = (frag__world_pos*0.5+0.5) * 40;
     ivec4 int_world_pos = ivec4(scaled_world_pos);
 
-    vec4 noised = get_rand_unit_vec(scaled_world_pos);
+    // vec4 noised = get_rand_unit_vec4(scaled_world_pos);
     // FragColor = get_color() * noised;
     // float val = dot_sample(int_world_pos,scaled_world_pos);
     // float val = dot_sample(int_world_pos+ivec4(1,1,1,1),scaled_world_pos);
-    float val = compute_perlin_noise(scaled_world_pos);
-    FragColor = get_color() * val;
+    // float val = compute_perlin_noise_2d(scaled_world_pos.xy);
+    // val = val *0.5+0.5;
+    // FragColor = get_color() * val;
     FragColor.w = 1.0f;
 }
 
