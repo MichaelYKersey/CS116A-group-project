@@ -22,13 +22,13 @@
 #include <terrain/Chunk.h>
 #include <terrain/Waterfall.h>
 #include <general/app_util.hpp>
+#include <general/water_plane.hpp>
 
 using namespace noise;
 
 void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void scroll_callback(GLFWwindow* window, double xoffset, double yoffset);
-void processInput(GLFWwindow *window);
-void renderWorld(VertexArrayWrapper &worldVAO, Shader worldShader, Renderer renderer, glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection, glm::vec4 plane);
+void processInput(GLFWwindow *window);void renderWorld(VertexArrayWrapper &worldVAO, Shader& worldShader, Renderer& renderer, glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection, glm::vec4& plane);
 
 // Use Config for all settings
 const int WORLD_SIZE = Config::World::SIZE;
@@ -61,15 +61,18 @@ int main()
     GLFWwindow* window = create_window();
     glfwSetCursorPosCallback(window, mouse_callback);
     glfwSetScrollCallback(window, scroll_callback);
+    glm::mat4 view = glm::mat4(1);
+    glm::mat4 projection = glm::mat4(1);
+    
     
     Shader worldShader(Config::Shaders::WORLD_SHADER);
-
+    
     // Init Renderer
     Renderer renderer;
-
+    
     // Create World Vertex Array
     VertexArrayWrapper worldVAO(Vertex_Normal_RGB_Optimized);
-
+    
     // Create Volumetric Fog system
     VolumetricFog fog;
 
@@ -84,7 +87,7 @@ int main()
     for (int i = 0; i < WORLD_SIZE; i++) {
         for (int j = 0; j < WORLD_SIZE; j++) {
             std::string key = "Chunk" + std::to_string(i) +","+ std::to_string(j);
-
+            
             // Create waterfall at configured position
             if (i == Config::World::WATERFALL_CHUNK_X && j == Config::World::WATERFALL_CHUNK_Z) {
                 std::cout << "Creating WATERFALL at chunk (" << i << ", " << j << ")" << std::endl;
@@ -116,7 +119,7 @@ int main()
             // Normal pointing up
             int normX = 1, normY = 2, normZ = 1;  // (0, 1, 0) up
             int colorID = 3;  // DARK BLUE water color
-
+            
             // Triangle 1
             int pos1 = x | (waterY << 6) | (z << 12);
             waterPlane.push_back(pos1 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24);
@@ -140,6 +143,8 @@ int main()
     std::cout << "Water plane created with " << waterPlane.size() << " vertices at y=" << waterY << std::endl;
     */
     // render loop
+    water_plane water(view,projection);
+
     // -----------
     while (!glfwWindowShouldClose(window))
     {
@@ -172,23 +177,23 @@ int main()
 
         // Initialize Transformation Matrices
         glm::mat4 model = glm::mat4(1.0f);
-
+        
         // FREE CAMERA - Use keyboard/mouse controls to navigate!
         // WASD: Move, Mouse: Look around, Scroll: Zoom
-        glm::mat4 view = camera.getViewMatrix();
+        view = camera.getViewMatrix();
         float aspect = (float)Config::Rendering::WINDOW_WIDTH / Config::Rendering::WINDOW_HEIGHT;
-        glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), aspect,
+        projection = glm::perspective(glm::radians(camera.zoom), aspect,
                                                 Config::Rendering::NEAR_PLANE, Config::Rendering::FAR_PLANE);
-
+                                                
         // Generate World
         glDisable(GL_CLIP_DISTANCE0);
         worldShader.use();
         worldShader.setFloat("time", currentFrame);  // Send time for water animation
-
+        
         // Apply Volumetric Fog - atmospheric waterfall mist!
         fog.applyToShader(worldShader);
-
-        renderWorld(worldVAO, worldShader, renderer, model, view, projection, glm::vec4(0, 0, 0, 0));
+        glm::vec4 plane = glm::vec4(0, 0, 0, 0);
+        renderWorld(worldVAO, worldShader, renderer, model, view, projection, plane);
 
         // RENDER FLUID PHYSICS PARTICLES
         if (waterfall) {
@@ -222,6 +227,8 @@ int main()
             }
         }
 
+        water.render();
+
         glfwSwapBuffers(window);
         glfwPollEvents();
 
@@ -238,7 +245,7 @@ int main()
     return 0;
 }
 
-void renderWorld(VertexArrayWrapper &worldVAO, Shader worldShader, Renderer renderer, glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection, glm::vec4 plane) {
+void renderWorld(VertexArrayWrapper &worldVAO, Shader& worldShader, Renderer& renderer, glm::mat4 &model, glm::mat4 &view, glm::mat4 &projection, glm::vec4& plane) {
     worldVAO.bind();
     worldShader.use();
     worldShader.setVec4("plane", plane);

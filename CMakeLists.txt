@@ -10,6 +10,7 @@ build_application(
     ./src/general/VolumetricFog.cpp
     ./src/general/Rain.cpp
     ./src/general/GeometryUtils.cpp
+    ./src/general/water_plane.cpp
     ./src/general/app_util.cpp
     ./src/terrain/Block.cpp
     ./src/terrain/Chunk.cpp

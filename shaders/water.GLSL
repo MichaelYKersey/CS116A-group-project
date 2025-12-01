@@ -217,7 +217,7 @@ float compute_perlin_noise_4d_layerd(vec4 perlin_pos, int layers)
 }
 void main()
 {
-    vec4 scaled_world_pos = (perlin_pos*0.5+0.5) * 5;
+    vec4 scaled_world_pos = (perlin_pos*0.5+0.5) / 3;
     ivec4 int_world_pos = ivec4(scaled_world_pos);
 
     // vec4 noised = get_rand_unit_vec4(scaled_world_pos);

@@ -84,6 +84,7 @@ namespace Config {
     namespace Shaders {
         constexpr const char* WORLD_SHADER = "./shaders/WorldShader.GLSL";
         constexpr const char* LIGHT_SHADER = "./shaders/LightsShader.GLSL";
+        constexpr const char* WATER_PLANE_SHADER = "./shaders/water.GLSL";
     }
 
     /**
