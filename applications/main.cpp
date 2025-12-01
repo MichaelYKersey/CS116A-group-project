@@ -63,8 +63,6 @@ int main()
     glfwSetScrollCallback(window, scroll_callback);
     
     Shader worldShader(Config::Shaders::WORLD_SHADER);
-    Shader lightShader(Config::Shaders::LIGHT_SHADER);
-    lightShader.use();
 
     // Init Renderer
     Renderer renderer;
@@ -140,55 +138,6 @@ int main()
     worldVAO.createVBO("WaterPlane", waterPlane);
     std::cout << "Water plane created with " << waterPlane.size() << " vertices at y=" << waterY << std::endl;
 
-    // Setup lights
-    std::vector<float> lights = {
-        // positions          
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f, 
-         0.5f,  0.5f, -0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f, 
-
-        -0.5f, -0.5f, 0.5f,
-         0.5f, -0.5f, 0.5f,
-         0.5f,  0.5f, 0.5f, 
-         0.5f,  0.5f, 0.5f,
-        -0.5f,  0.5f, 0.5f,
-        -0.5f, -0.5f, 0.5f, 
-
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f,
-        -0.5f, -0.5f, -0.5f, 
-        -0.5f, -0.5f, -0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f, 
-
-        0.5f,  0.5f,  0.5f,
-        0.5f,  0.5f, -0.5f,
-        0.5f, -0.5f, -0.5f, 
-        0.5f, -0.5f, -0.5f,
-        0.5f, -0.5f,  0.5f,
-        0.5f,  0.5f,  0.5f, 
-
-        -0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f, -0.5f,
-         0.5f, -0.5f,  0.5f, 
-         0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f,  0.5f,
-        -0.5f, -0.5f, -0.5f, 
-
-        -0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f, -0.5f,
-         0.5f,  0.5f,  0.5f, 
-         0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f,  0.5f,
-        -0.5f,  0.5f, -0.5f, 
-    };
-    VertexArrayWrapper lightVAO(Vertex_Default);
-    lightVAO.createVBO("Light", lights);
-    lightVAO.bindVBO("Light");
-
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -229,18 +178,6 @@ int main()
         float aspect = (float)Config::Rendering::WINDOW_WIDTH / Config::Rendering::WINDOW_HEIGHT;
         glm::mat4 projection = glm::perspective(glm::radians(camera.zoom), aspect,
                                                 Config::Rendering::NEAR_PLANE, Config::Rendering::FAR_PLANE);
-        
-        // Render SUN - big glowing sphere in the sky!
-        lightShader.use();
-        lightVAO.bind();
-        model = glm::mat4(1.0f);
-        model = glm::translate(model, lightPos);
-        model = glm::scale(model, glm::vec3(Config::Lighting::SUN_SCALE));  // From Config
-        lightShader.setMat4("model", model);
-        lightShader.setMat4("view", view);
-        lightShader.setMat4("projection", projection);
-        lightVAO.bindVBO("Light");
-        renderer.draw(lightVAO, lightShader);
 
         // Generate World
         glDisable(GL_CLIP_DISTANCE0);
