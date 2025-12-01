@@ -93,4 +93,27 @@ namespace Config {
     namespace Physics {
         constexpr float GRAVITY = -9.8f;  // m/s^2
     }
+
+    /**
+     * @brief Water plane configuration (advanced Perlin noise water)
+     */
+    namespace WaterPlane {
+        constexpr float SIZE = 300.0f;              // World units (covers entire terrain)
+        constexpr float HEIGHT = -5.51f;            // Y position (below terrain)
+        constexpr float PERLIN_SCALE = 6.0f;        // Noise scale (higher = more detail)
+        constexpr float TIME_DIVISOR = 20.0f;       // Slows down animation
+        constexpr float OFFSET_X_SPEED = 10.0f;     // X-axis flow speed
+        constexpr float OFFSET_Y_SPEED = -1.0f;     // Y-axis flow speed (negative = downward)
+        constexpr float OFFSET_Z_SPEED = 1.0f;      // Z-axis flow speed
+    }
+
+    /**
+     * @brief Terrain generation thresholds
+     */
+    namespace Terrain {
+        constexpr float SAND_THRESHOLD = 0.3f;      // Below 30% height = sand
+        constexpr float GRASS_THRESHOLD = 0.5f;     // Below 50% height = grass
+        constexpr float STONE_THRESHOLD = 0.9f;     // Below 90% height = stone
+        // Above 90% = snow
+    }
 }

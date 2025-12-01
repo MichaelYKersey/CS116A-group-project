@@ -57,13 +57,16 @@ void Chunk::setupHeightMap() {
 }
 
 BlockTexture Chunk::getTextureFromHeight(int height) {
-  if (height <= 3 * CHUNK_SIZE / 10) {
+  // Use Config thresholds for terrain material assignment
+  float normalizedHeight = (float)height / CHUNK_SIZE;
+
+  if (normalizedHeight <= Config::Terrain::SAND_THRESHOLD) {
     return SAND;
   }
-  else if (height <= 5 * CHUNK_SIZE / 10) {
+  else if (normalizedHeight <= Config::Terrain::GRASS_THRESHOLD) {
     return GRASS;
   }
-  else if (height <= 9 * CHUNK_SIZE / 10) {
+  else if (normalizedHeight <= Config::Terrain::STONE_THRESHOLD) {
     return STONE;
   }
 
@@ -264,18 +267,18 @@ std::vector<float> Chunk::renderSmooth() {
       // Create 2 triangles for this quad
       // Triangle 1: h00, h10, h01
       {
-        // Vertex 1: (x, h00, z)
-        int pos1 = x | ((int)h00 << 6) | (z << 12);
+        // Vertex 1: (x, h00, z) - use round() for better precision
+        int pos1 = x | ((int)round(h00) << 6) | (z << 12);
         int encoded1 = pos1 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24;
         vertices.push_back(encoded1);
 
         // Vertex 2: (x+1, h10, z)
-        int pos2 = (x+1) | ((int)h10 << 6) | (z << 12);
+        int pos2 = (x+1) | ((int)round(h10) << 6) | (z << 12);
         int encoded2 = pos2 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24;
         vertices.push_back(encoded2);
 
         // Vertex 3: (x, h01, z+1)
-        int pos3 = x | ((int)h01 << 6) | ((z+1) << 12);
+        int pos3 = x | ((int)round(h01) << 6) | ((z+1) << 12);
         int encoded3 = pos3 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24;
         vertices.push_back(encoded3);
       }
@@ -283,17 +286,17 @@ std::vector<float> Chunk::renderSmooth() {
       // Triangle 2: h10, h11, h01
       {
         // Vertex 1: (x+1, h10, z)
-        int pos1 = (x+1) | ((int)h10 << 6) | (z << 12);
+        int pos1 = (x+1) | ((int)round(h10) << 6) | (z << 12);
         int encoded1 = pos1 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24;
         vertices.push_back(encoded1);
 
         // Vertex 2: (x+1, h11, z+1)
-        int pos2 = (x+1) | ((int)h11 << 6) | ((z+1) << 12);
+        int pos2 = (x+1) | ((int)round(h11) << 6) | ((z+1) << 12);
         int encoded2 = pos2 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24;
         vertices.push_back(encoded2);
 
         // Vertex 3: (x, h01, z+1)
-        int pos3 = x | ((int)h01 << 6) | ((z+1) << 12);
+        int pos3 = x | ((int)round(h01) << 6) | ((z+1) << 12);
         int encoded3 = pos3 | (normX | normY << 2 | normZ << 4) << 18 | colorID << 24;
         vertices.push_back(encoded3);
       }
