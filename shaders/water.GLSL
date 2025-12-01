@@ -85,8 +85,9 @@ float perlin_interpolate(float a, float b, float t)
     // overall_t += -15.0f * pt;
     // pt *= t;
     // overall_t += 10.0f * pt;
-    float overall_t = t*t*t;
-    return (a * (1-overall_t)) + (b * overall_t);
+    // float overall_t = t*t*t;
+    float overall_t = t*t*t*(t*(t*6 - 15) + 10);
+    return mix(a,b,overall_t);
 }
 float compute_perlin_noise_2d(vec2 perlin_pos_2d)
 {
@@ -201,9 +202,9 @@ void main()
     // FragColor = get_color() * noised;
     // float val = dot_sample(int_world_pos,scaled_world_pos);
     // float val = dot_sample(int_world_pos+ivec4(1,1,1,1),scaled_world_pos);
-    // float val = compute_perlin_noise_2d(scaled_world_pos.xy);
-    // val = val *0.5+0.5;
-    // FragColor = get_color() * val;
+    float val = compute_perlin_noise_2d(scaled_world_pos.xy);
+    val = val *0.5+0.5;
+    FragColor = get_color() * val;
     FragColor.w = 1.0f;
 }
 
