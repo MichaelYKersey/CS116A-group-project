@@ -118,7 +118,7 @@ float compute_perlin_noise_2d(vec2 perlin_pos_2d)
     return i;
 }
 
-float compute_perlin_noise(vec4 perlin_pos)
+float compute_perlin_noise_4d(vec4 perlin_pos)
 {   
     vec4 perlin_pos_int0 = ivec4(perlin_pos);
     vec4 perlin_pos_int1 = perlin_pos_int0 + ivec4(1,1,1,1);
@@ -193,7 +193,6 @@ float compute_perlin_noise(vec4 perlin_pos)
     float s = perlin_interpolate(s0,s1,fract_pos.x);
     return s;
 }
-
 vec4 get_color(float val)
 {
     //color technique from here: https://www.reddit.com/r/gamedev/comments/1kd36md/tiny_tip_on_how_to_quickly_use_perlin_noise_to/
@@ -205,17 +204,29 @@ vec4 get_color(float val)
     // return vec4(1.0f,1.0f,1.0f,1.0f); 
 }
 
+float compute_perlin_noise_4d_layerd(vec4 perlin_pos, int layers)
+{
+    float val = 0.0f;
+    float frq = 1.0f;
+    for (int i=0; i< layers; i++) {
+        val /= 2.0f;
+        val += compute_perlin_noise_4d(perlin_pos * frq);
+        frq /= 0.5f;
+    }
+    return val;
+}
 void main()
 {
-    vec4 scaled_world_pos = (perlin_pos*0.5+0.5) * 40;
+    vec4 scaled_world_pos = (perlin_pos*0.5+0.5) * 5;
     ivec4 int_world_pos = ivec4(scaled_world_pos);
 
     // vec4 noised = get_rand_unit_vec4(scaled_world_pos);
     // FragColor = get_color() * noised;
     // float val = dot_sample(int_world_pos,scaled_world_pos);
     // float val = dot_sample(int_world_pos+ivec4(1,1,1,1),scaled_world_pos);
-    float val = compute_perlin_noise(scaled_world_pos);
+    float val = compute_perlin_noise_4d_layerd(scaled_world_pos,3);
     val = val *0.5+0.5;
+    // FragColor = vec4(1,1,1,1) * val;
     FragColor = get_color(val);
     FragColor.w = 1.0f;
 }
