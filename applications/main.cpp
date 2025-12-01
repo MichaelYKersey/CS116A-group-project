@@ -104,6 +104,7 @@ int main()
 
     std::cout << "iterated through chunks" << std::endl;
 
+    /*
     // Create WATER PLANE underneath terrain to fill gaps - DARK BLUE water visible through cracks
     std::cout << "Creating water plane underneath terrain..." << std::endl;
     std::vector<float> waterPlane;
@@ -137,7 +138,7 @@ int main()
     }
     worldVAO.createVBO("WaterPlane", waterPlane);
     std::cout << "Water plane created with " << waterPlane.size() << " vertices at y=" << waterY << std::endl;
-
+    */
     // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
@@ -262,7 +263,7 @@ void renderWorld(VertexArrayWrapper &worldVAO, Shader worldShader, Renderer rend
             renderer.draw(worldVAO, worldShader);
         }
     }
-
+    /*
     // Draw WATER PLANE underneath terrain - dark blue water visible through gaps
     // Render at each chunk position like terrain
     worldVAO.bindVBO("WaterPlane");
@@ -275,6 +276,7 @@ void renderWorld(VertexArrayWrapper &worldVAO, Shader worldShader, Renderer rend
             renderer.draw(worldVAO, worldShader);
         }
     }
+    */
 }
 
 // process all input: query GLFW whether relevant keys are pressed/released this frame and react accordingly
