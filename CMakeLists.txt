@@ -7,9 +7,14 @@ build_application(
     ./src/general/CameraWrapper.cpp
     ./src/general/Renderer.cpp
     ./src/general/VertexArrayWrapper.cpp
+    ./src/general/VolumetricFog.cpp
+    ./src/general/Rain.cpp
+    ./src/general/GeometryUtils.cpp
     ./src/general/app_util.cpp
     ./src/terrain/Block.cpp
     ./src/terrain/Chunk.cpp
+    ./src/terrain/Waterfall.cpp
+    ./src/terrain/BlockRegistry.cpp
     ./src/noise/noiseutils.cpp
     
     # comment out all applications besides the one you want to run

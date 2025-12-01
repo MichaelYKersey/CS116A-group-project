@@ -10,11 +10,12 @@ enum BlockTexture {
   GRASS,
   DIRT,
   WATER,
+  WATER_PARTICLE,  // Lighter cyan for fluid physics particles
   STONE,
   WOOD,
   SAND,
   ICE,
-  SNOW, 
+  SNOW,
   TOTAL,
 };
 
