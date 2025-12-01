@@ -1,10 +1,12 @@
 #include <general/Config.h>
 #include <general/water_plane.hpp>
 
-water_plane::water_plane(glm::mat4& p_view,glm::mat4& p_projection) 
+water_plane::water_plane(glm::mat4& p_view,glm::mat4& p_projection, glm::vec3& p_view_pos, VolumetricFog p_fog) 
     : m_view(p_view) , 
     m_projection(p_projection), 
-    m_shader(Shader(Config::Shaders::WATER_PLANE_SHADER))
+    m_shader(Shader(Config::Shaders::WATER_PLANE_SHADER)),
+    m_view_pos(p_view_pos),
+    m_fog(p_fog)
 { 
     float size = 300;
     float height = -5.51;
@@ -38,8 +40,9 @@ water_plane::water_plane(glm::mat4& p_view,glm::mat4& p_projection)
 void water_plane::render()
 {
     m_shader.use();
+    m_fog.applyToShader(m_shader);
     float time = glfwGetTime()/20.0f;
-    // float time = 0;
+    m_shader.setVec3("viewPos",m_view_pos);
     m_shader.setFloat("perlin_progress", time);
     m_shader.setMat4("model", glm::mat4(1));
     m_shader.setMat4("view", m_view);

@@ -7,17 +7,29 @@ uniform vec3 perlin_offset;
 uniform mat4 model;
 uniform mat4 view;
 uniform mat4 projection;
+out vec3 FragPos;
+
 void main()
 {
     //perlin noise is reltive to model orgin
     perlin_pos = vec4(vertex_model_pos+perlin_offset, perlin_progress);
     gl_Position = projection * view * model * vec4(vertex_model_pos, 1.0);
+    vec4 FragPos4 = model * vec4(vertex_model_pos, 1.0);
+    FragPos = FragPos4.xyz;
 }
 
 #Shader Fragment
 #version 330 core
 out vec4 FragColor;
 in vec4 perlin_pos;
+
+// VOLUMETRIC FOG PARAMETERS
+uniform vec3 fogColor;      // Color of fog (light blue/gray)
+uniform float fogDensity;   // How thick the fog is
+uniform float fogStart;     // Distance where fog begins
+uniform float fogEnd;       // Distance where fog is maximum
+uniform vec3 viewPos;
+in vec3 FragPos;
 
 // hash ripped form internet (https://stackoverflow.com/questions/4200224/random-noise-functions-for-glsl)
 // A single iteration of Bob Jenkins' One-At-A-Time hashing algorithm.
@@ -220,15 +232,27 @@ void main()
     vec4 scaled_world_pos = (perlin_pos*0.5+0.5) / 3;
     ivec4 int_world_pos = ivec4(scaled_world_pos);
 
-    // vec4 noised = get_rand_unit_vec4(scaled_world_pos);
-    // FragColor = get_color() * noised;
-    // float val = dot_sample(int_world_pos,scaled_world_pos);
-    // float val = dot_sample(int_world_pos+ivec4(1,1,1,1),scaled_world_pos);
     float val = compute_perlin_noise_4d_layerd(scaled_world_pos,3);
     val = val *0.5+0.5;
-    // FragColor = vec4(1,1,1,1) * val;
-    FragColor = get_color(val);
-    FragColor.w = 1.0f;
+    vec4 result = get_color(val);
+    result.w = 1.0f;
+
+    FragColor = result;
+
+
+    // VOLUMETRIC FOG - Distance-based atmospheric fog
+    float distance = length(viewPos - FragPos);  // Distance from camera to fragment
+
+    // Linear fog between fogStart and fogEnd
+    float fogFactor = (fogEnd - distance) / (fogEnd - fogStart);
+    fogFactor = clamp(fogFactor, 0.0, 1.0);  // Clamp between 0 (full fog) and 1 (no fog)
+
+    // Alternative: Exponential fog (more realistic)
+    // fogFactor = exp(-fogDensity * distance);
+
+    // Mix fragment color with fog color based on distance
+    FragColor = mix(vec4(fogColor,1.0f), result, fogFactor);
+
 }
 
 

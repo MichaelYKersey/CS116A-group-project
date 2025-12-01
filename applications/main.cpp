@@ -142,9 +142,9 @@ int main()
     worldVAO.createVBO("WaterPlane", waterPlane);
     std::cout << "Water plane created with " << waterPlane.size() << " vertices at y=" << waterY << std::endl;
     */
-    // render loop
-    water_plane water(view,projection);
+    water_plane water(view,projection,camera.position,fog);
 
+    // render loop
     // -----------
     while (!glfwWindowShouldClose(window))
     {
